@@ -42,7 +42,7 @@ TestCase = [
         SenNode([SenLeaf('true')],'('),
         compile("{a+=1;b+=1;}"),
         SenLeaf('else'),
-        SenNode([compile('return;')],'{')
+        SenNode([compile('return;')],'{')-
         ],None)),
     ("f(0);",SenNode([SenLeaf('f'), SenNode([SenLeaf('0')],'(')],';')),
     ("while(1){};",SenNode([SenLeaf('while'), 
