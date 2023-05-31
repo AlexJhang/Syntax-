@@ -146,6 +146,27 @@ def find_sym_reverse(symbol_list : list, sym_tar : str, sym_reverse : str):
             return i
     return -1
 
+def firstFalse(L : list, f):
+    #assert type(f) == function
+    '''
+    return : 
+        -1   : f(l) is True, for all l in L
+        >=0  : index of the first False 
+    '''
+    for i, a in enumerate(L):
+        if f(a) == False:
+            return i
+    return -1    
+
+def allTrue(L : list, f):
+    idx = firstFalse(L, f)
+    if idx == -1:
+        return True
+    else:
+        return False
+
+
+
 
 def isNum(c):
     n = ord(c)
@@ -167,48 +188,3 @@ def prefix_cmp(text : str, CmpStr : str) -> bool:
         return True
     else:
         return False
-    
-
-
-if __name__ == '__main__':
-
-    #src_path = r"D:\alex_jhang\Desktop\FW_source_code\PS8229_BICS6\ps8229_sd_kic_b6_t_p_fsp_phi_ctlc_v29.21x\src\merge.c"
-    tar_path = r"D:\[Task]\2023\031600\Code\result\res_1.txt"
-
-    #res_line_list = remove_all_comment(open(src_path, 'rb').readlines())
-    #lines_to_Code(res_line_list, tar_path)
-    
-    res_line_list = []
-    src_dir = r"D:\alex_jhang\Desktop\FW_source_code\PS8229_sd6_p_t_hynix_v6_uhs1_yang_cmdq\NRS"
-    for src_path in find_all_file(src_dir + r"\src") + find_all_file(src_dir + r"\inc"):
-        print(src_path)
-        #src_path = src_dir+'/src/'+f
-        res_line_list += remove_all_comment(open(src_path, 'rb').readlines())
-
-    
-        
-    #with open(tar_path, 'wb')  as wf:
-    #    for line in res_line_list :
-    #        show = False
-    #        if len(line) > 0:
-    #            if (line[0] not in ' #{}'):
-    #                show = True
-    #                if re.match('[A-Za-z0-9_]+:', line) != None:
-    #                    show = False
-    #                    
-    #        
-    #        if show:
-    #            wf.write(bytes(line, "utf-8"))
-    #            wf.write(b"\r\n")
-    
-    with open(tar_path, 'wb')  as wf:
-        for line in res_line_list :
-            show = False
-            if len(line) > 0:
-                if line[:7] == "#define":
-                    show = True
-                        
-            
-            if show:
-                wf.write(bytes(line, "utf-8"))
-                wf.write(b"\r\n")

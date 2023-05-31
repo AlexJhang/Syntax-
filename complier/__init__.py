@@ -3,6 +3,7 @@ from enum import Enum
 import complier.operator as Oper
 from util import find_list_idx, find_sym_reverse, debug_recursive
 from util import isNum, isWord
+from complier.constType import string2Const
 
 class SubString:
     def __init__(self, text, start = 0, end = None):
@@ -93,6 +94,16 @@ def check_symbol_type(sym : str):
             return None
     
     #SymbolType.Constant
+    # string
+    if len(sym) >= 2:
+        if sym[0] == "'" and sym[-1] == "'" and len(sym) == 3:
+            return SymbolType.Constant
+        elif sym[0] == '"' and sym[-1] == '"' and len(sym) == 3:
+            return None
+        elif sym[0] == '"' and sym[-1] == '"':
+            return SymbolType.Constant
+        
+    # number
     if sym[0] in ".-" or isNum(sym[0]):
         # hex
         if len(sym) > 2:
@@ -371,7 +382,7 @@ class SenNode:
     def show(symbol, tabNum = 0, for_semicolon = False):
         #print('tabNum', tabNum, symbol)
         if type(symbol) == list:
-            print('Error :',symbol)
+            #print('Error :',symbol)
             raise('show error')
             #for sym in symbol:
             #    SenNode.show(sym, tabNum = tabNum)
@@ -385,6 +396,8 @@ class SenNode:
             
     def check_function(self):
         if len(self) == 2:
+            if self.symbol_list[0].is_leaf() == False:
+                return False
             if check_symbol_type(self.symbol_list[0].leaf_val())  != SymbolType.Variable:
                 return False
             if type(self.symbol_list[1]) != SenNode:
@@ -396,14 +409,14 @@ class SenNode:
     
     def compute(self, vars = dict()):
         assert type(vars) == dict
-        print(self, self.op, self.is_leaf())
+        #print(self, self.op, self.is_leaf())
         
         if self.is_leaf():
             a0 = self.symbol_list[0]
             t0 = check_symbol_type(a0)
             #print("leaf : ",a0 ,t0)
             if t0 == SymbolType.Constant:
-                return eval(a0)
+                return string2Const(a0)
             elif t0 == SymbolType.Variable:
                 assert a0 in vars, f"{a0}  {vars}"
                 return vars[a0]
@@ -412,13 +425,13 @@ class SenNode:
         #
         # function
         #
-        print("-3")
+        #print("-3")
         if self.check_function():
             func_name = self.symbol_list[0].leaf_val()
             assert func_name in vars, f"{func_name}  {vars}"
-            print("-4")
+            #print("-4")
             args = [w.compute(vars = vars) for w in self.symbol_list[1].symbol_list]
-            print('args= ', args)
+            #print('args= ', args)
             return vars[func_name](*args)
             #if func_name
             
