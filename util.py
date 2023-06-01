@@ -160,6 +160,12 @@ def firstFalse(L : list, f, reverse = False):
     return firstTrue(L, lambda x : not f(x), reverse = reverse)
 
 def allTrue(L : list, f):
+    ''' 
+    weather all f(e) is True for all l in L  
+    
+    Args:
+    f : function f(any) -> bool   
+    '''
     idx = firstFalse(L, f)
     if idx == -1:
         return True

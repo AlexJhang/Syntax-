@@ -13,11 +13,11 @@ from complier import check_node, check_build_split
 if __name__ == '__main__':
     #text = ''
     
-    #text = "(5)"
+    text = "a+=1"
     #text = 'b*=1+2*3'
     #text = "3 + 6"
     #text = "if(a){i+=1;}else{i-=1;}"
-    text = "if(0){a+=1;b+=1;}"
+    #text = "if(0){a+=1;b+=1;}"
     #text="{a+=1;b+=1;}"
     symbol_list = parse_words(text)
     print("words : ",symbol_list)
