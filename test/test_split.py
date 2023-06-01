@@ -12,7 +12,7 @@ def compile(text):
     return build_node(parse_words(text))
 
 TestCase = [
-    #("a b; (c) d;",SenNode([],None)),
+    ("a b; (c) d;",SenNode([],None)),
     
     ("a b",SenNode([SenLeaf('a'), SenLeaf('b')],None)),
     ("a (b)",SenNode([SenLeaf('a'), SenNode([SenLeaf('b')],'(')],None)),

@@ -1,7 +1,7 @@
 from enum import Enum
 
 import complier.operator as Oper
-from util import find_list_idx, find_sym_reverse, debug_recursive, firstFalse
+from util import find_list_idx, find_sym_reverse, debug_recursive, firstFalse, firstTrue
 from util import isNum, isWord
 from complier.constType import string2Const
 
@@ -551,7 +551,7 @@ def build_split(symbol_list : list):
             
         elif w in [';',',']:
             f = lambda s : s.op == w if type(s) == SenNode else s == w
-            idx = firstFalse(res, f, reverse=True) + 1
+            idx = firstTrue(res, f, reverse=True) + 1
             res = res[:idx] + [SenNode(res[idx:],w)]
                 
         else:

@@ -139,7 +139,7 @@ def find_sym_reverse(symbol_list : list, sym_tar : str, sym_reverse : str):
             return i
     return -1
 
-def firstFalse(L : list, f, reverse = False):
+def firstTrue(L : list, f, reverse = False):
     #assert type(f) == function
     '''
     return : 
@@ -155,6 +155,9 @@ def firstFalse(L : list, f, reverse = False):
             else:
                 return l - i - 1
     return -1  
+
+def firstFalse(L : list, f, reverse = False):
+    return firstTrue(L, lambda x : not f(x), reverse = reverse)
 
 def allTrue(L : list, f):
     idx = firstFalse(L, f)
