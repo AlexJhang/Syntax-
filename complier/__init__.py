@@ -1,7 +1,7 @@
 from enum import Enum
 
 import complier.operator as Oper
-from util import find_list_idx, find_sym_reverse, debug_recursive
+from util import find_list_idx, find_sym_reverse, debug_recursive, firstFalse
 from util import isNum, isWord
 from complier.constType import string2Const
 
@@ -537,7 +537,63 @@ def check_build_split(senNode : SenNode):
         check_build_split(w)
             
 
-def build_split(symbol_list : list, skip_semicolon = False):
+def build_split(symbol_list : list):
+    ''' create nodes by split symbols, ()[]{}. '''
+    res = []
+    for w in symbol_list:
+        print(w,res)
+
+        if w in [')',']','}']:
+            rw = Symbol_Split_map[w]
+            idx = find_list_idx(res, rw, reverse=True)
+            assert idx >= 0
+            res = res[:idx] + [SenNode(res[idx + 1:],rw)]
+            
+        elif w in [';',',']:
+            f = lambda s : s.op == w if type(s) == SenNode else s == w
+            idx = firstFalse(res, f, reverse=True) + 1
+            res = res[:idx] + [SenNode(res[idx:],w)]
+                
+        else:
+            res.append(w)
+        
+    senNode = SenNode(res, None)
+    senNode = format_node(senNode)
+    senNode = reduce_node(senNode)
+    return senNode
+
+def format_node(sym) -> SenNode:
+    print(sym, type(sym))
+    #debug_recursive(10)
+    if type(sym) == str:
+        return SenLeaf(sym)
+    
+    if type(sym) == SenNode:
+        res = [format_node(w) for w in sym.symbol_list]
+        op = sym.op
+    elif type(sym) == list:
+        res = [format_node(w) for w in sym]
+        op = None
+    else:
+        raise()
+    
+    return SenNode(res,op)
+
+def reduce_node(senNode : SenNode) -> SenNode:
+    assert type(senNode) == SenNode
+    if len(senNode) == 1 and senNode.op == None and (not senNode.is_leaf()):
+        if type(senNode.symbol_list[0]) == SenNode:
+            return senNode.symbol_list[0]
+    
+    return senNode
+    
+
+    
+    
+    
+     
+
+def build_split_1(symbol_list : list, skip_semicolon = False):
     ''' create nodes by split symbols, ()[]{}. '''
     
     #print(symbol_list)

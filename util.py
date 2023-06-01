@@ -113,7 +113,7 @@ def split_mulit_blank(line : str):
 def reduce_blank( line : str):
     return " ".join(split_mulit_blank(line))
 
-def find_list_idx(symbol_list : list, Tar, reverse = False):
+def find_list_idx(L : list, Tar, reverse = False):
     '''
     Args:
         Tar:
@@ -123,15 +123,8 @@ def find_list_idx(symbol_list : list, Tar, reverse = False):
     '''
     if type(Tar) != list:
         Tar = [Tar]
-    iter = enumerate(symbol_list) if reverse == False else enumerate(reversed(symbol_list))
-    L = len(symbol_list)
-    for i, w in iter:
-        if w in Tar:
-            if reverse == False:
-                return i
-            else:
-                return L - i - 1
-    return -1
+        
+    return firstFalse(L , lambda x: x in Tar, reverse = reverse)
 
 def find_sym_reverse(symbol_list : list, sym_tar : str, sym_reverse : str):
     s = -1
@@ -146,17 +139,22 @@ def find_sym_reverse(symbol_list : list, sym_tar : str, sym_reverse : str):
             return i
     return -1
 
-def firstFalse(L : list, f):
+def firstFalse(L : list, f, reverse = False):
     #assert type(f) == function
     '''
     return : 
         -1   : f(l) is True, for all l in L
         >=0  : index of the first False 
     '''
-    for i, a in enumerate(L):
-        if f(a) == False:
-            return i
-    return -1    
+    iter = enumerate(L) if reverse == False else enumerate(reversed(L))
+    l = len(L)
+    for i, w in iter:
+        if f(w):
+            if reverse == False:
+                return i
+            else:
+                return l - i - 1
+    return -1  
 
 def allTrue(L : list, f):
     idx = firstFalse(L, f)
