@@ -140,7 +140,7 @@ def find_sym_reverse(symbol_list : list, sym_tar : str, sym_reverse : str):
     return -1
 
 def firstTrue(L : list, f, reverse = False):
-    #assert type(f) == function
+    assert callable(f)
     '''
     return : 
         -1   : f(l) is True, for all l in L

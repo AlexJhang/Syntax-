@@ -85,7 +85,8 @@ def check_symbol_type(sym : str):
         if len(sym) == 1:
             return SymbolType.Operator 
         if sym in ["++","--","<<",">>","<=",">=","==","!=","&&","||",
-                   "?:","*=","+=","-=","/=","%=","&=","^=","|=","<<=",">>=","-x"]:
+                   "?:","*=","+=","-=","/=","%=","&=","^=","|=","<<=",">>=",
+                   "-x","++x","--x"]:
             return SymbolType.Operator
         
         if sym[0] == '-' and ((sym[1] == ".") or isNum(sym[1])):
@@ -416,7 +417,7 @@ class SenNode:
     
     def compute(self, vars = dict()):
         assert type(vars) == dict
-        #print(self, self.op, self.is_leaf())
+        print(self, self.op, self.is_leaf())
         
         if self.is_leaf():
             a0 = self.symbol_list[0]
@@ -462,10 +463,10 @@ class SenNode:
             #
                 assert func_name in vars, f"{func_name}  {vars}"
                 assert len(self) == 2
-                
-                args = [w.compute(vars = vars) for w in self.symbol_list[1].symbol_list]
-                #print('args= ', args)
-                return vars[func_name](*args)
+                if callable(vars[func_name]):
+                    args = [w.compute(vars = vars) for w in self.symbol_list[1].symbol_list]
+                    #print('args= ', args, func_name)
+                    return vars[func_name](*args)
                 #if func_name
             
         #
@@ -484,7 +485,10 @@ class SenNode:
         #
         if self.op in Oper.uinary_oper_compute.keys():
             a0 = self.symbol_list[0].compute(vars = vars)
-            return Oper.uinary_oper_compute[self.op](a0)
+            t = Oper.uinary_oper_compute[self.op](a0)
+            if self.op in ['++x','--x']:
+                vars[self.symbol_list[0].val] = t
+            return t
 
         assert len(self.symbol_list) == 2, self.symbol_list
         
@@ -608,10 +612,11 @@ def reduce_node(senNode : SenNode) -> SenNode:
         return senNode
     
     assert type(senNode) == SenNode
-    #print('r ',senNode)
+    print('r ',senNode)
     if len(senNode) == 1 and senNode.op == None and (not senNode.is_leaf()):
         if isinstance(senNode.symbol_list[0], SenNode):
-            return senNode.symbol_list[0]
+            print('rr')
+            return reduce_node(senNode.symbol_list[0])
     
     return SenNode(
         [reduce_node(w) for w in senNode.symbol_list],
@@ -755,6 +760,7 @@ def build_oper(senNode : SenNode) -> SenNode:
     
     res_list = []
     op = None
+    findOP = False
     
     print(senNode)
     
@@ -768,25 +774,42 @@ def build_oper(senNode : SenNode) -> SenNode:
             op = sym_list[idx].val
             #print('op=',op)
             #print('-1.1')
-            res_list = [
-                build_oper(sym_list[:idx]),build_oper(sym_list[idx+1:])
-            ]
-            return SenNode(res_list, op)
+            #res_list = [
+            #    build_oper(sym_list[:idx]),build_oper(sym_list[idx+1:])
+            #]
+            res_list = [sym_list[:idx], sym_list[idx+1:]]
+            findOP = True
+            #return SenNode(res_list, op)
     #
     # uinary operator
     #
+    print('-2',sym_list)
     if len(sym_list) == 2:
-        for op_list in ['!-']:
+        for op_list in [['!','-','--','++']]:
             op = sym_list[0].val
             if op in op_list:
+                
                 if op == '-':
                     op = '-x'
-                return SenNode(sym_list[1:], op)
+                elif op == '--':
+                    op = '--x'
+                elif op == '++':
+                    op = '++x'
+                findOP = True
+                res_list = sym_list[1:]
+                #return SenNode(sym_list[1:], op)
                 
-
-    if type(senNode) == list:
-        return SenNode(sym_list, None)
-    return SenNode(res_list, op)
+    print('-3',res_list)
+    if findOP == True:
+        return SenNode([SenNode(
+            [build_oper(w) for w in res_list]
+            , op)],senNode.op)
+    
+    else:
+        res_list = [build_oper(w) for w in sym_list]
+        if type(senNode) == list:
+            return SenNode(res_list, None)
+        return SenNode(res_list, senNode.op)
     
 
 def build_oper_1(sym_list):

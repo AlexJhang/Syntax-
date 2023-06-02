@@ -15,7 +15,7 @@ if __name__ == '__main__':
     
     #text = "a+=1"
     #text = 'b*=1+2*3'
-    text = 'b += - 50'
+    text = 'b += (a+=3)'
     #text = "3 + 6"
     #text = "if(a){i+=1;}else{i-=1;}"
     #text = "if(0){a+=1;b+=1;}"
@@ -24,16 +24,19 @@ if __name__ == '__main__':
     print("words : ",symbol_list)
 
     senNode = build_split(symbol_list)
-    #sys.exit()
+    
     print(senNode)
     #sys.exit()
+    
     print("-1---------------------")
     check_build_split(senNode)
     senNode = build_oper(senNode)
+    print("-2---------------------")
     senNode = reduce_node(senNode)
     print(senNode)
+    #sys.exit()
     
-    print("-2---------------------")
+    print("-3---------------------")
     check_node(senNode)
     #sys.exit()
     
