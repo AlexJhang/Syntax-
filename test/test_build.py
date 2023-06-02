@@ -5,7 +5,7 @@ sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 #print(sys.path)
 
-from complier import build_node, parse_words, SenNode, SenLeaf
+from complier import build_node, parse_words, SenNode, SenLeaf, CtlNode
 from complier import check_node, check_build_split
 
 def compile(text):
@@ -31,11 +31,10 @@ TestCase = [
                 ],';'),
         ],'{')
      ),
-    ("if(true){a+=1;b+=1;}",SenNode([
-        SenLeaf('if'),
+    ("if(true){a+=1;b+=1;}",CtlNode([
         SenNode([SenLeaf('true')],'('),
         compile("{a+=1;b+=1;}")
-        ],None)),
+        ],'if')),
     ("if(true){a+=1;b+=1;}else{return;}",SenNode([
         SenLeaf('if'),
         SenNode([SenLeaf('true')],'('),
