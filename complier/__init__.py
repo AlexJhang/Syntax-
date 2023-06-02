@@ -18,18 +18,6 @@ class SubString:
     def __str__(self):
         return self.text[self.start: self.end]
     
-    
-class Sentence:
-    def __init__(self):
-        self.operator = 0
-        self.args = []
-        self.original_text = ""
-        
-class macro:
-    def __init__(self) -> None:
-        self.name = ""
-        self.argc = 0
-        
         
 keyWords = [
     "char","double","enum","float","int","long" ,"short" ,"signed","struct","union","unsign","void",
@@ -533,6 +521,12 @@ class SenLeaf(SenNode):
         else:
             return super().__eq__(__value)
 
+
+class CtlNode(SenNode):
+    
+    def __init__(self, symbol_list: list, op) -> None:
+        super().__init__(symbol_list, op)
+
 def check_node(senNode : SenNode):
     #print(senNode)    
     assert isinstance(senNode, SenNode), senNode
@@ -821,7 +815,14 @@ def build_oper(senNode : SenNode) -> SenNode:
                 findOP = True
                 res_list = sym_list[1:]
                 #return SenNode(sym_list[1:], op)
-                
+    
+    #
+    # control ,ex. for, while, if ...
+    #
+    CtlName = sym_list[0].val
+    if check_symbol_type(CtlName) == SymbolType.KeyWord:
+        pass
+    
     #print('-3',res_list)
     if findOP == True:
         return SenNode([SenNode(

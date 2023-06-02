@@ -15,9 +15,9 @@ if __name__ == '__main__':
     
     #text = "a+=1"
     #text = 'b*=1+2*3'
-    text = '{a+=1;b+=1;{++a;{++b;}}}'
+    #text = '{a+=1;b+=1;{++a;{++b;}}}'
     #text = "3 + 6"
-    #text = "if(a){i+=1;}else{i-=1;}"
+    text = "if(a){i+=1;}else{i-=1;}"
     #text = "if(0){a+=1;b+=1;}"
     #text="{a+=1;b+=1;}"
     symbol_list = parse_words(text)
