@@ -250,7 +250,7 @@ class FuncNode:
         pass
     def compute(self,args = []):
         pass
-        
+
 class SenNode:
     def __init__(self,symbol_list : list, op) -> None:
         assert type(symbol_list) == list, symbol_list
@@ -293,6 +293,10 @@ class SenNode:
         if self.op != __value.op:
             return False
         return True
+    
+    @property
+    def symList_op(self):
+        return self.symbol_list, self._op
     
     def is_leaf(self):
         #if (self.op == None) and len(self.symbol_list) == 1:
@@ -405,7 +409,7 @@ class SenNode:
     
     def compute(self, vars = dict()):
         assert type(vars) == dict
-        #print(self, self.op, self.is_leaf())
+        print(self, self.op, self.is_leaf())
         
         if self.is_leaf():
             a0 = self.symbol_list[0]
@@ -520,12 +524,20 @@ class SenLeaf(SenNode):
             return self.val == __value
         else:
             return super().__eq__(__value)
-
+class NullNode(SenNode):
+    def __init__(self) -> None:
+        super().__init__([], None)
 
 class CtlNode(SenNode):
+    def create(senNode):
+        return CtlNode([senNode[1], senNode[2]],senNode[0].val)
     
     def __init__(self, symbol_list: list, op) -> None:
         super().__init__(symbol_list, op)
+        
+    def compute(self, vars = dict()):
+        if self[0].compute(vars=vars) == 1:
+            return self[1].compute(vars=vars)
 
 def check_node(senNode : SenNode):
     #print(senNode)    
@@ -624,20 +636,20 @@ def format_node(sym) -> SenNode:
     return SenNode(res,op)
 
 def reduce_node(senNode : SenNode) -> SenNode:
-    if type(senNode) == SenLeaf:
+    assert isinstance(senNode, SenNode)
+    
+    if senNode.is_leaf():
         return senNode
     
-    assert type(senNode) == SenNode
+    
     #print('r ',senNode)
     if len(senNode) == 1 and senNode.op == None and (not senNode.is_leaf()):
         if isinstance(senNode.symbol_list[0], SenNode):
             #print('rr')
             return reduce_node(senNode.symbol_list[0])
     
-    return SenNode(
-        [reduce_node(w) for w in senNode.symbol_list],
-        senNode.op
-    )
+    senNode.symbol_list = [reduce_node(w) for w in senNode.symbol_list]
+    return senNode
     
 
 def build_split_1(symbol_list : list, skip_semicolon = False):
@@ -778,7 +790,7 @@ def build_oper(senNode : SenNode) -> SenNode:
     op = None
     findOP = False
     
-    #print(senNode)
+    print(senNode)
     
     #
     # binary operator
@@ -788,12 +800,9 @@ def build_oper(senNode : SenNode) -> SenNode:
         #if idx != -1:
         if idx > 0:
             op = sym_list[idx].val
-            #print('op=',op)
-            #print('-1.1')
-            #res_list = [
-            #    build_oper(sym_list[:idx]),build_oper(sym_list[idx+1:])
-            #]
             res_list = [sym_list[:idx], sym_list[idx+1:]]
+            
+            resNode = SenNode(res_list, op)
             findOP = True
             #return SenNode(res_list, op)
     #
@@ -812,28 +821,45 @@ def build_oper(senNode : SenNode) -> SenNode:
                     op = '--x'
                 elif op == '++':
                     op = '++x'
-                findOP = True
                 res_list = sym_list[1:]
+                
+                resNode = SenNode(res_list, op)
+                findOP = True
                 #return SenNode(sym_list[1:], op)
     
     #
     # control ,ex. for, while, if ...
     #
-    CtlName = sym_list[0].val
-    if check_symbol_type(CtlName) == SymbolType.KeyWord:
-        pass
+    if check_oper_control(senNode):
+        resNode = CtlNode.create(senNode)
+        
+        if resNode != None:
+            findOP = True
+        
     
     #print('-3',res_list)
     if findOP == True:
-        return SenNode([SenNode(
-            [build_oper(w) for w in res_list]
-            , op)],senNode.op)
+        resNode.symbol_list = [build_oper(w) for w in resNode.symbol_list]
+        return SenNode([resNode],senNode.op)
     
     else:
         res_list = [build_oper(w) for w in sym_list]
         if type(senNode) == list:
             return SenNode(res_list, None)
         return SenNode(res_list, senNode.op)
+
+def check_oper_control(senNode : SenNode) -> bool:
+    if type(senNode) != SenNode:
+        return False
+    if type(senNode[0]) != SenLeaf:
+        return False
+    if check_symbol_type(senNode[0].val) != SymbolType.KeyWord:
+        return False
+    if len(senNode) < 2:
+        return False
+    return True
+    
+    
     
 
 def build_oper_1(sym_list):
