@@ -38,5 +38,6 @@ assign_binary_oper = {
 }
 
 uinary_oper_compute = {
-    '!' : lambda a: 0 if a > 0 else 1,
+    '!' : lambda a : 0 if a > 0 else 1,
+    '-x' : lambda a : -a,
 }

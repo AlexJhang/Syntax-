@@ -85,7 +85,7 @@ def check_symbol_type(sym : str):
         if len(sym) == 1:
             return SymbolType.Operator 
         if sym in ["++","--","<<",">>","<=",">=","==","!=","&&","||",
-                   "?:","*=","+=","-=","/=","%=","&=","^=","|=","<<=",">>="]:
+                   "?:","*=","+=","-=","/=","%=","&=","^=","|=","<<=",">>=","-x"]:
             return SymbolType.Operator
         
         if sym[0] == '-' and ((sym[1] == ".") or isNum(sym[1])):
@@ -401,10 +401,11 @@ class SenNode:
             SenNode.print_format(symbol, tabNum = tabNum)
             
     def check_function(self):
-        if len(self) == 2:
+        ''' include function, if, while, ...'''
+        if len(self) >= 2:
             if self.symbol_list[0].is_leaf() == False:
                 return False
-            if check_symbol_type(self.symbol_list[0].leaf_val())  != SymbolType.Variable:
+            if check_symbol_type(self.symbol_list[0].leaf_val())  not in [SymbolType.Variable, SymbolType.KeyWord] :
                 return False
             if type(self.symbol_list[1]) != SenNode:
                 return False
@@ -431,6 +432,7 @@ class SenNode:
         #
         # function
         #
+        
         #print("-3")
         if self.check_function():
             #print("-4")
@@ -443,7 +445,7 @@ class SenNode:
                 assert len(self) >= 2
                 if self.symbol_list[2].op == '{':
                     if self.symbol_list[1].compute(vars = vars) == 1:
-                        #self.symbol_list[2].compute(vars = vars)
+                        self.symbol_list[2].compute(vars = vars)
                         pass
                 elif self.symbol_list[2].op == ';':
                     pass
@@ -459,13 +461,13 @@ class SenNode:
             # self-define functions
             #
                 assert func_name in vars, f"{func_name}  {vars}"
+                assert len(self) == 2
                 
                 args = [w.compute(vars = vars) for w in self.symbol_list[1].symbol_list]
                 #print('args= ', args)
                 return vars[func_name](*args)
                 #if func_name
             
-
         #
         # split operator, ex. ( [ {
         #
@@ -500,7 +502,7 @@ class SenNode:
             a0 = self.symbol_list[0].leaf_val()
             a1 = self.symbol_list[1].compute(vars = vars)
             assert check_symbol_type(a0) == SymbolType.Variable
-            #print(a0)
+            print(a0,a1)
             assert a0 in vars, f"{a0}  {vars}"
             if self.op == '=':
                 vars[a0] = a1
@@ -527,16 +529,9 @@ class SenLeaf(SenNode):
         else:
             return super().__eq__(__value)
 
-#def SenLeaf(sym : str):
-#    assert type(sym) == str
-#    senNode = SenNode([sym], None)
-#    senNode = SenNode([sym], None)
-#    assert senNode.is_leaf() == True
-#    return senNode
-#
 def check_node(senNode : SenNode):
     #print(senNode)    
-    assert type(senNode) == SenNode, senNode
+    assert isinstance(senNode, SenNode), senNode
     assert type(senNode.symbol_list) == list , senNode
 
     if senNode.is_leaf():
@@ -549,14 +544,17 @@ def check_build_split(senNode : SenNode):
     #print(senNode)    
     
     if type(senNode) == SenLeaf:
-        assert len(senNode.symbol_list) == 1
         assert senNode.op == None
+        assert len(senNode.symbol_list) == 1
         assert type(senNode.symbol_list[0]) == str
+        assert senNode.is_leaf() == True
         return           
     elif type(senNode) == SenNode:
         if len(senNode.symbol_list) == 1 and senNode.op == None:
             raise('no reduce')
-    
+        
+        assert senNode.is_leaf() == False
+        
         for w in senNode.symbol_list:
             check_build_split(w)
     else:
@@ -606,18 +604,20 @@ def format_node(sym) -> SenNode:
     return SenNode(res,op)
 
 def reduce_node(senNode : SenNode) -> SenNode:
+    if type(senNode) == SenLeaf:
+        return senNode
+    
     assert type(senNode) == SenNode
+    #print('r ',senNode)
     if len(senNode) == 1 and senNode.op == None and (not senNode.is_leaf()):
-        if type(senNode.symbol_list[0]) == SenNode:
+        if isinstance(senNode.symbol_list[0], SenNode):
             return senNode.symbol_list[0]
     
-    return senNode
+    return SenNode(
+        [reduce_node(w) for w in senNode.symbol_list],
+        senNode.op
+    )
     
-
-    
-    
-    
-     
 
 def build_split_1(symbol_list : list, skip_semicolon = False):
     ''' create nodes by split symbols, ()[]{}. '''
@@ -740,8 +740,54 @@ def create_nodes(symbol_list : list):
         #print(symbol_list)
         #if symbol_list
 
-def build_oper(senNode : SenNode):
-    pass
+def build_oper(senNode : SenNode) -> SenNode:
+    
+    if type(senNode) == SenLeaf:
+        return senNode
+    elif type(senNode) == list:
+        sym_list = senNode
+    else:
+        assert type(senNode) == SenNode, senNode
+        
+        sym_list = senNode.symbol_list
+        if len(sym_list) == 0:
+            return senNode    
+    
+    res_list = []
+    op = None
+    
+    print(senNode)
+    
+    #
+    # binary operator
+    #
+    for op_list in Oper.oper_oreder_table:
+        idx = find_list_idx(sym_list, op_list, reverse= True)
+        #if idx != -1:
+        if idx > 0:
+            op = sym_list[idx].val
+            #print('op=',op)
+            #print('-1.1')
+            res_list = [
+                build_oper(sym_list[:idx]),build_oper(sym_list[idx+1:])
+            ]
+            return SenNode(res_list, op)
+    #
+    # uinary operator
+    #
+    if len(sym_list) == 2:
+        for op_list in ['!-']:
+            op = sym_list[0].val
+            if op in op_list:
+                if op == '-':
+                    op = '-x'
+                return SenNode(sym_list[1:], op)
+                
+
+    if type(senNode) == list:
+        return SenNode(sym_list, None)
+    return SenNode(res_list, op)
+    
 
 def build_oper_1(sym_list):
     

@@ -124,7 +124,7 @@ def find_list_idx(L : list, Tar, reverse = False):
     if type(Tar) != list:
         Tar = [Tar]
         
-    return firstFalse(L , lambda x: x in Tar, reverse = reverse)
+    return firstTrue(L , lambda x: x in Tar, reverse = reverse)
 
 def find_sym_reverse(symbol_list : list, sym_tar : str, sym_reverse : str):
     s = -1
