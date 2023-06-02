@@ -266,7 +266,7 @@ class FuncNode:
 class SenNode:
     def __init__(self,symbol_list : list, op) -> None:
         assert type(symbol_list) == list, symbol_list
-        assert type(op) == str or op == None
+        assert type(op) == str or op == None, op
         self.symbol_list = symbol_list
         self._op = op
         
@@ -417,7 +417,7 @@ class SenNode:
     
     def compute(self, vars = dict()):
         assert type(vars) == dict
-        print(self, self.op, self.is_leaf())
+        #print(self, self.op, self.is_leaf())
         
         if self.is_leaf():
             a0 = self.symbol_list[0]
@@ -564,40 +564,62 @@ def check_build_split(senNode : SenNode):
     else:
         raise()
             
-
+def build_comma(senNode : SenNode) -> SenNode:
+    sym_list = senNode.symbol_list
+    for i,w in enumerate(sym_list):
+        if type(w) != SenLeaf:
+            sym_list[i] = build_comma(sym_list[i])
+    
+    last_idx = 0
+    res=[]
+    
+    for i,w in enumerate(sym_list):
+        if w in [';',',']:
+            w = w.val
+            res.append(SenNode(sym_list[last_idx:i],w))
+            last_idx = i+1
+            
+    if last_idx == 0:
+        return SenNode(sym_list, senNode.op)
+    if last_idx < len(sym_list):
+        res.append(SenNode(sym_list[last_idx:],None))
+    return SenNode(res, senNode.op)
+    
 def build_split(symbol_list : list):
     ''' create nodes by split symbols, ()[]{}. '''
     res = []
     for w in symbol_list:
-        print(w,res)
+        #print(w,res)
 
         if w in [')',']','}']:
             rw = Symbol_Split_map[w]
             idx = find_list_idx(res, rw, reverse=True)
             assert idx >= 0
             res = res[:idx] + [SenNode(res[idx + 1:],rw)]
-            
-        elif w in [';',',']:
-            f = lambda s : s.op == w if type(s) == SenNode else s == w
-            idx = firstTrue(res, f, reverse=True) + 1
-            res = res[:idx] + [SenNode(res[idx:],w)]
-                
         else:
             res.append(w)
         
     senNode = SenNode(res, None)
     senNode = format_node(senNode)
     senNode = reduce_node(senNode)
+    
+    senNode = build_comma(senNode)
+    #print('comma : ',senNode)
+    senNode = format_node(senNode)
+    senNode = reduce_node(senNode)
+    
     return senNode
 
 def format_node(sym) -> SenNode:
-    print(sym, type(sym))
+    #print(sym, type(sym))
     #debug_recursive(10)
     if type(sym) == str:
         return SenLeaf(sym)
+    if type(sym) == SenLeaf:
+        return sym
     
     if type(sym) == SenNode:
-        res = [format_node(w) for w in sym.symbol_list]
+        res = [format_node(w) for w in sym]
         op = sym.op
     elif type(sym) == list:
         res = [format_node(w) for w in sym]
@@ -612,10 +634,10 @@ def reduce_node(senNode : SenNode) -> SenNode:
         return senNode
     
     assert type(senNode) == SenNode
-    print('r ',senNode)
+    #print('r ',senNode)
     if len(senNode) == 1 and senNode.op == None and (not senNode.is_leaf()):
         if isinstance(senNode.symbol_list[0], SenNode):
-            print('rr')
+            #print('rr')
             return reduce_node(senNode.symbol_list[0])
     
     return SenNode(
@@ -762,7 +784,7 @@ def build_oper(senNode : SenNode) -> SenNode:
     op = None
     findOP = False
     
-    print(senNode)
+    #print(senNode)
     
     #
     # binary operator
@@ -783,8 +805,9 @@ def build_oper(senNode : SenNode) -> SenNode:
     #
     # uinary operator
     #
-    print('-2',sym_list)
-    if len(sym_list) == 2:
+    
+    #print('-2',sym_list)
+    if type(sym_list[0]) == SenLeaf and len(sym_list) == 2:
         for op_list in [['!','-','--','++']]:
             op = sym_list[0].val
             if op in op_list:
@@ -799,7 +822,7 @@ def build_oper(senNode : SenNode) -> SenNode:
                 res_list = sym_list[1:]
                 #return SenNode(sym_list[1:], op)
                 
-    print('-3',res_list)
+    #print('-3',res_list)
     if findOP == True:
         return SenNode([SenNode(
             [build_oper(w) for w in res_list]
@@ -932,6 +955,7 @@ def build_node(symbol_list, check = True):
     if check == True:
         check_build_split(senNode)
     senNode = build_oper(senNode)
+    senNode = reduce_node(senNode)
     if check == True:
         check_node(senNode)
     return senNode

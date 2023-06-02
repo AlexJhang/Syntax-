@@ -16,12 +16,11 @@ TestCase = [
     ("a (b)",SenNode([SenLeaf('a'), SenNode([SenLeaf('b')],'(')],None)),
     ("a(b(c))",SenNode([SenLeaf('a'), SenNode([SenLeaf('b'), SenNode([SenLeaf('c')],'(')], '(')],None)),
     
-    
-    
     ("a+=1",SenNode([SenLeaf('a'), SenLeaf('1')],'+=')),
     ("a+=1;",SenNode([compile("a+=1")],';')),
     ("{a+=1;}",SenNode([compile("a+=1;")],'{')),
     ("a+=1;b+=1;",SenNode([compile("a+=1;"),compile("b+=1;")],None)),
+    ("a+=1;b+=1",SenNode([compile("a+=1;"),compile("b+=1")],None)),
     ("{a+=1;b+=1;}",
         SenNode([
             SenNode([
