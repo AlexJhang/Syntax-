@@ -5,19 +5,19 @@ class SenNode:
     def __init__(self,symbol_list : list, op) -> None:
         assert type(symbol_list) == list, symbol_list
         assert type(op) == str or op == None, op
+        
         self.symbol_list = symbol_list
-        self._op = op
+        self.__op = op
         
     @property
     def op(self):
-        return self._op
+        return self.__op
     
     def __str__(self) -> str:
         if self.op == None:
             return "[|"+str(self.symbol_list)[1:]
-        #print(self.op, str(self.symbol_list))
         return  f"['{self.op}' | " + str(self.symbol_list)[1:]
-        #return  str( [self.op] + self.symbol_list)
+    
     def __len__(self):
         return len(self.symbol_list)
     def __iter__(self):
@@ -46,18 +46,22 @@ class SenNode:
     
     @property
     def symList_op(self):
-        return self.symbol_list, self._op
+        return self.symbol_list, self.__op
     
     def is_leaf(self):
         #if (self.op == None) and len(self.symbol_list) == 1:
-        #    return type(self.symbol_list[0]) == str
+        #    return type(self[0]) == str
         return False
     def leaf_val(self):
         assert self.is_leaf()
-        return self.symbol_list[0]
+        return self[0]
     
     def print(*args, **kwargs):
         print(*args, **kwargs)
+    
+    #
+    # show
+    #
     
     def show_rule_1(self, tabNum = 0):
         if self.op == None:
@@ -98,7 +102,7 @@ class SenNode:
             end_w = self.op
             if self.visit_for == False:
                 nextLine_end = True
-        elif self.symbol_list[0] == 'for':
+        elif self[0] == 'for':
             SenNode.print_format('for')
             SenNode.show(sym[1],tabNum = tabNum)
             SenNode.show(sym,tabNum = tabNum)
@@ -108,7 +112,7 @@ class SenNode:
             SenNode.print_format('',nextLine = True, tabNum = tabNum) 
         
         tmp_visit_for = False
-        for sym in self.symbol_list:
+        for sym in self:
             SenNode.show(sym,tabNum = tabNum)
             
             
@@ -142,27 +146,30 @@ class SenNode:
         else:
             #print('-8')
             SenNode.print_format(symbol, tabNum = tabNum)
-            
-    def check_function(self):
+    
+    #
+    # computer
+    #
+     
+    def _check_function(self):
         ''' include function, if, while, ...'''
         if len(self) >= 2:
-            if self.symbol_list[0].is_leaf() == False:
+            if self[0].is_leaf() == False:
                 return False
-            if check_symbol_type(self.symbol_list[0].leaf_val())  not in [SymbolType.Variable, SymbolType.KeyWord] :
+            if check_symbol_type(self[0].leaf_val())  not in [SymbolType.Variable, SymbolType.KeyWord] :
                 return False
-            if type(self.symbol_list[1]) != SenNode:
+            if type(self[1]) != SenNode:
                 return False
-            if self.symbol_list[1].op == '(':
+            if self[1].op == '(':
                 return True
         return False
-             
-    
+
     def compute(self, vars = dict()):
         assert type(vars) == dict
         print(self, self.op, self.is_leaf())
         
         if self.is_leaf():
-            a0 = self.symbol_list[0]
+            a0 = self[0]
             t0 = check_symbol_type(a0)
             #print("leaf : ",a0 ,t0)
             if t0 == SymbolType.Constant:
@@ -177,20 +184,20 @@ class SenNode:
         #
         
         #print("-3")
-        if self.check_function():
+        if self._check_function():
             #print("-4")
             
             #
             #  key word function
             #
-            func_name = self.symbol_list[0].leaf_val()
+            func_name = self[0].leaf_val()
             if func_name == "if":
                 assert len(self) >= 2
-                if self.symbol_list[2].op == '{':
-                    if self.symbol_list[1].compute(vars = vars) == 1:
-                        self.symbol_list[2].compute(vars = vars)
+                if self[2].op == '{':
+                    if self[1].compute(vars = vars) == 1:
+                        self[2].compute(vars = vars)
                         pass
-                elif self.symbol_list[2].op == ';':
+                elif self[2].op == ';':
                     pass
                 else:
                     raise()
@@ -206,7 +213,7 @@ class SenNode:
                 assert func_name in vars, f"{func_name}  {vars}"
                 assert len(self) == 2
                 if callable(vars[func_name]):
-                    args = [w.compute(vars = vars) for w in self.symbol_list[1].symbol_list]
+                    args = [w.compute(vars = vars) for w in self[1].symbol_list]
                     #print('args= ', args, func_name)
                     return vars[func_name](*args)
                 #if func_name
@@ -215,9 +222,9 @@ class SenNode:
         # split operator, ex. ( [ {
         #
         if (self.op in [None, '(','[','{']) or check_symbol_type(self.op) != SymbolType.Operator:
-            if len(self.symbol_list) == 1:
-                return self.symbol_list[0].compute(vars = vars)
-            for w in self.symbol_list:
+            if len(self) == 1:
+                return self[0].compute(vars = vars)
+            for w in self:
                 assert type(w) == SenNode, w
                 w.compute(vars = vars)
             return None
@@ -226,27 +233,27 @@ class SenNode:
         # uinary operator, ex. ~ ! 
         #
         if self.op in Oper.uinary_oper_compute.keys():
-            a0 = self.symbol_list[0].compute(vars = vars)
+            a0 = self[0].compute(vars = vars)
             t = Oper.uinary_oper_compute[self.op](a0)
             if self.op in ['++x','--x']:
-                vars[self.symbol_list[0].val] = t
+                vars[self[0].val] = t
             return t
 
-        assert len(self.symbol_list) == 2, self.symbol_list
+        assert len(self) == 2, self.symbol_list
         
         #
         # binary operator, ex. + - * /  
         #
         if self.op in Oper.binary_oper_compute.keys():
-            a0 = self.symbol_list[0].compute(vars = vars)
-            a1 = self.symbol_list[1].compute(vars = vars)
+            a0 = self[0].compute(vars = vars)
+            a1 = self[1].compute(vars = vars)
             return Oper.binary_oper_compute[self.op](a0, a1)
         #
         # assign operator, ex. = += *= 
         #
         elif self.op in ['='] + list(Oper.assign_binary_oper.keys()):
-            a0 = self.symbol_list[0].leaf_val()
-            a1 = self.symbol_list[1].compute(vars = vars)
+            a0 = self[0].leaf_val()
+            a1 = self[1].compute(vars = vars)
             assert check_symbol_type(a0) == SymbolType.Variable
             print(a0,a1)
             assert a0 in vars, f"{a0}  {vars}"

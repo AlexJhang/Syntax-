@@ -48,3 +48,4 @@ if __name__ == '__main__':
     print(vars)
     print(senNode.compute(vars))
     print(vars)
+    
