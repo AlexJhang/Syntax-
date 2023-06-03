@@ -6,26 +6,34 @@ class SenNode:
         assert type(symbol_list) == list, symbol_list
         assert type(op) == str or op == None, op
         
-        self.symbol_list = symbol_list
+        self.__args = symbol_list
         self.__op = op
         
     @property
     def op(self):
         return self.__op
     
+    @property
+    def symbol_list(self):
+        return self.__args
+    
+    @symbol_list.setter
+    def symbol_list(self, __value):
+        self.__args = __value
+    
     def __str__(self) -> str:
         if self.op == None:
-            return "[|"+str(self.symbol_list)[1:]
-        return  f"['{self.op}' | " + str(self.symbol_list)[1:]
+            return "[|"+str(self.__args)[1:]
+        return  f"['{self.op}' | " + str(self.__args)[1:]
     
     def __len__(self):
-        return len(self.symbol_list)
+        return len(self.__args)
     def __iter__(self):
         self.i = 0
         return self
     def __next__(self):
-        if self.i < len(self.symbol_list):
-            res = self.symbol_list[self.i]
+        if self.i < len(self.__args):
+            res = self.__args[self.i]
             self.i += 1
             return res
         else:
@@ -33,12 +41,12 @@ class SenNode:
     def __repr__(self) -> str:
         return str(self)    
     def __getitem__(self, i):
-        return self.symbol_list[i]
+        return self.__args[i]
     
     def __eq__(self, __value) -> bool:
         if type(__value) != type(self):
             return False
-        if self.symbol_list != __value.symbol_list:
+        if self.__args != __value.symbol_list:
             return False
         if self.op != __value.op:
             return False
@@ -46,10 +54,10 @@ class SenNode:
     
     @property
     def symList_op(self):
-        return self.symbol_list, self.__op
+        return self.__args, self.__op
     
     def is_leaf(self):
-        #if (self.op == None) and len(self.symbol_list) == 1:
+        #if (self.op == None) and len(self.__args) == 1:
         #    return type(self[0]) == str
         return False
     def leaf_val(self):
@@ -65,21 +73,21 @@ class SenNode:
     
     def show_rule_1(self, tabNum = 0):
         if self.op == None:
-            SenNode.show(self.symbol_list,tabNum = tabNum)
+            SenNode.show(self.__args,tabNum = tabNum)
         elif self.op in "([":
             SenNode.print_format(self.op)
-            SenNode.show(self.symbol_list,tabNum = tabNum)
+            SenNode.show(self.__args,tabNum = tabNum)
             SenNode.print_format(Symbol_Split_map[self.op])
         elif self.op == '{':
             SenNode.print_format(self.op, nextLine = True, tabNum = tabNum + 1)
-            SenNode.show(self.symbol_list, tabNum = tabNum + 1)
+            SenNode.show(self.__args, tabNum = tabNum + 1)
             SenNode.print_format('',nextLine = True, tabNum = tabNum)
             SenNode.print_format(Symbol_Split_map[self.op], tabNum = tabNum)
         elif self.op in ";":
-            SenNode.show(self.symbol_list,tabNum = tabNum)
+            SenNode.show(self.__args,tabNum = tabNum)
             SenNode.print_format(self.op)
         else:
-            SenNode.show(self.symbol_list,tabNum = tabNum)
+            SenNode.show(self.__args,tabNum = tabNum)
     visit_for = False
     def show_rule_2(self, tabNum = 0, for_semicolon = False):
         print('visit_for =',SenNode.visit_for)
@@ -239,7 +247,7 @@ class SenNode:
                 vars[self[0].val] = t
             return t
 
-        assert len(self) == 2, self.symbol_list
+        assert len(self) == 2, self.__args
         
         #
         # binary operator, ex. + - * /  

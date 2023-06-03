@@ -290,7 +290,7 @@ def reduce_node(senNode : SenNode) -> SenNode:
             #print('rr')
             return reduce_node(senNode.symbol_list[0])
     
-    senNode.symbol_list = [reduce_node(w) for w in senNode.symbol_list]
+    senNode.symbol_list = [reduce_node(w) for w in senNode]
     return senNode
     
 
