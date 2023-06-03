@@ -5,7 +5,7 @@ from util import find_list_idx, find_sym_reverse, debug_recursive
 from util import firstFalse, firstTrue, allTrue
 from util import isNum, isWord
 from complier.symbolType import string2Const, check_symbol_type, SymbolType
-from complier.senNode import SenNode
+from complier.senNode import SenNode, CtlNode
 
 class SubString:
     def __init__(self, text, start = 0, end = None):
@@ -34,16 +34,6 @@ class Buf_text:
         self.output.append(self.buf)
         self.buf = ""
     
-    
-
-class SecntenceNode:
-    def __init__(self) -> None:
-        self.operator = None
-        self.args = [] #list[SecntenceNode]
-
-def parse_expr(symbol_list:list[str]):
-    pass
-
 
 def parse_words_split(text : str) -> list:
     symbol_list = []
@@ -143,12 +133,6 @@ Symbol_Split_map = {
 Symbol_Split = ['(','[','{']
 Symbol_Split_rev = [')',']','}']
 
-class FuncNode:
-    def __init__(self) -> None:
-        pass
-    def compute(self,args = []):
-        pass
-
 
 class SenLeaf(SenNode):
     def __init__(self, sym : str):
@@ -166,20 +150,6 @@ class SenLeaf(SenNode):
             return self.val == __value
         else:
             return super().__eq__(__value)
-class NullNode(SenNode):
-    def __init__(self) -> None:
-        super().__init__([], None)
-
-class CtlNode(SenNode):
-    def create(senNode):
-        return CtlNode([senNode[1], senNode[2]],senNode[0].val)
-    
-    def __init__(self, symbol_list: list, op) -> None:
-        super().__init__(symbol_list, op)
-        
-    def compute(self, vars = dict()):
-        if self[0].compute(vars=vars) == 1:
-            return self[1].compute(vars=vars)
 
 def check_node(senNode : SenNode):
     #print(senNode)    

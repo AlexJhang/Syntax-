@@ -272,3 +272,20 @@ class SenNode:
                 vars[a0] = b
             return vars[a0]
 
+class NullNode(SenNode):
+    def __init__(self) -> None:
+        super().__init__([], None)
+
+class CtlNode(SenNode):
+    def create(senNode):
+        return CtlNode([senNode[1], senNode[2]],senNode[0].val)
+    
+    def __init__(self, symbol_list: list, op) -> None:
+        super().__init__(symbol_list, op)
+        
+    def compute(self, vars = dict()):
+        if self[0].compute(vars=vars) == 1:
+            return self[1].compute(vars=vars)
+
+class FuncNode(SenNode):
+    pass
