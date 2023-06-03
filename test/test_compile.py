@@ -17,7 +17,7 @@ if __name__ == '__main__':
     #text = 'b*=1+2*3'
     #text = '{a+=1;b+=1;{++a;{++b;}}}'
     #text = "3 + 6"
-    text = "if(true){b+=1;}"
+    text = "if(true){b+=square(10);}"
     #text = "if(1){a+=1;b+=1;}"
     #text="{a+=1;b+=1;}"
     symbol_list = parse_words(text)
@@ -41,6 +41,7 @@ if __name__ == '__main__':
     #sys.exit()
     
     vars={
+        'square': lambda x:x*x,
         'true':1,
         'a' : 10,
         'b' : 15

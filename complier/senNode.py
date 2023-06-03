@@ -2,11 +2,11 @@ from complier.symbolType import string2Const, check_symbol_type, SymbolType
 import complier.operator as Oper
 
 class SenNode:
-    def __init__(self,symbol_list : list, op) -> None:
-        assert type(symbol_list) == list, symbol_list
+    def __init__(self, args : list, op) -> None:
+        assert type(args) == list, args
         assert type(op) == str or op == None, op
         
-        self.__args = symbol_list
+        self.__args = args
         self.__op = op
         
     @property
@@ -221,7 +221,7 @@ class SenNode:
                 assert func_name in vars, f"{func_name}  {vars}"
                 assert len(self) == 2
                 if callable(vars[func_name]):
-                    args = [w.compute(vars = vars) for w in self[1].symbol_list]
+                    args = [w.compute(vars = vars) for w in self[1]]
                     #print('args= ', args, func_name)
                     return vars[func_name](*args)
                 #if func_name
