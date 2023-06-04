@@ -105,10 +105,6 @@ def parse_words(text : str) -> list:
         
     return res_list
     
-
-
-
-
             
 def find_code_region(symbol_list : list):
     if symbol_list[0] == '{':
@@ -138,29 +134,25 @@ def check_node(senNode : SenNode):
     assert isinstance(senNode, SenNode), senNode
     assert type(senNode.args) == list , senNode
 
-    if senNode.is_leaf():
+    if senNode.is_leaf:
         return 
     else:
-        for w in senNode.args:
-            check_node(w)
+        map(check_node, senNode)
 
 def check_build_split(senNode : SenNode):
     #print(senNode)    
     
     if type(senNode) == SenLeaf:
-        assert senNode.op == None
-        assert len(senNode.args) == 1
-        assert type(senNode.args[0]) == str
-        assert senNode.is_leaf() == True
-        return           
+        assert SenLeaf.check(senNode) == True
+        return
+    
     elif type(senNode) == SenNode:
         if len(senNode.args) == 1 and senNode.op == None:
             raise('no reduce')
         
-        assert senNode.is_leaf() == False
+        assert senNode.is_leaf == False
         
-        for w in senNode.args:
-            check_build_split(w)
+        map(check_build_split, senNode)
     else:
         raise()
             
@@ -211,6 +203,9 @@ def build_split(symbol_list : list):
     return senNode
 
 def format_node(sym) -> SenNode:
+    '''
+    format : every node is SenNode (include subclass)
+    '''
     #print(sym, type(sym))
     #debug_recursive(10)
     if type(sym) == str:
@@ -219,10 +214,11 @@ def format_node(sym) -> SenNode:
         return sym
     
     if type(sym) == SenNode:
-        res = [format_node(w) for w in sym]
+        res = map(format_node, sym)
         op = sym.op
+        return sym
     elif type(sym) == list:
-        res = [format_node(w) for w in sym]
+        res = map(format_node, sym)
         op = None
     else:
         raise()
@@ -232,17 +228,17 @@ def format_node(sym) -> SenNode:
 def reduce_node(senNode : SenNode) -> SenNode:
     assert isinstance(senNode, SenNode)
     
-    if senNode.is_leaf():
+    if senNode.is_leaf:
         return senNode
     
     
     #print('r ',senNode)
-    if len(senNode) == 1 and senNode.op == None and (not senNode.is_leaf()):
+    if len(senNode) == 1 and senNode.op == None and (not senNode.is_leaf):
         if isinstance(senNode.args[0], SenNode):
             #print('rr')
             return reduce_node(senNode.args[0])
     
-    senNode.args = [reduce_node(w) for w in senNode]
+    senNode.map(reduce_node)
     return senNode
     
 
@@ -433,7 +429,7 @@ def build_oper(senNode : SenNode) -> SenNode:
     
     #print('-3',res_list)
     if findOP == True:
-        resNode.args = [build_oper(w) for w in resNode]
+        resNode.map(build_oper)
         return SenNode([resNode],senNode.op)
     
     else:
@@ -530,7 +526,7 @@ def build_oper_1(sym_list):
             senNode.args = res_list
             if len(res_list) == 1:
                 assert type(res_list[0]) == SenNode;
-                if res_list[0].op == None and res_list[0].is_leaf() == False:
+                if res_list[0].op == None and res_list[0].is_leaf == False:
                     senNode.args = res_list[0].args
                 
             return senNode

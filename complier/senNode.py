@@ -9,6 +9,7 @@ class SenNode:
         self.__args = args
         self.__op = op
         
+        self.edit = True #switch to edit args
         
     @property
     def op(self):
@@ -20,15 +21,25 @@ class SenNode:
 
     @args.setter
     def args(self, __value):
+        assert self.edit
         self.__args = __value
     
+    
+    # str
     def __str__(self) -> str:
         if self.op == None:
             return "[|"+str(self.__args)[1:]
         return  f"['{self.op}' | " + str(self.__args)[1:]
+    def __repr__(self) -> str:
+        return str(self)       
     
+    # list
+    def __getitem__(self, i):
+        return self.__args[i]    
     def __len__(self):
         return len(self.__args)
+
+    # iter
     def __iter__(self):
         self.i = 0
         return self
@@ -39,10 +50,7 @@ class SenNode:
             return res
         else:
             raise StopIteration
-    def __repr__(self) -> str:
-        return str(self)    
-    def __getitem__(self, i):
-        return self.__args[i]
+    
     
     def __eq__(self, __value) -> bool:
         if type(__value) != type(self):
@@ -53,16 +61,21 @@ class SenNode:
             return False
         return True
     
+    def map(self, f):
+        assert callable(f)
+        self.args = [f(w) for w in self]
+    
     @property
     def symList_op(self):
         return self.__args, self.__op
     
+    @property
     def is_leaf(self):
         #if (self.op == None) and len(self.__args) == 1:
         #    return type(self[0]) == str
         return False
     def leaf_val(self):
-        assert self.is_leaf()
+        assert self.is_leaf
         return self[0]
     
     def print(*args, **kwargs):
@@ -163,7 +176,7 @@ class SenNode:
     def _check_function(self):
         ''' include function, if, while, ...'''
         if len(self) >= 2:
-            if self[0].is_leaf() == False:
+            if self[0].is_leaf == False:
                 return False
             if check_symbol_type(self[0].leaf_val())  not in [SymbolType.Variable, SymbolType.KeyWord] :
                 return False
@@ -175,9 +188,9 @@ class SenNode:
 
     def compute(self, vars = dict()):
         assert type(vars) == dict
-        print(self, self.op, self.is_leaf())
+        print(self, self.op, self.is_leaf)
         
-        if self.is_leaf():
+        if self.is_leaf:
             a0 = self[0]
             t0 = check_symbol_type(a0)
             #print("leaf : ",a0 ,t0)
@@ -278,9 +291,21 @@ class NullNode(SenNode):
         super().__init__([], None)
 
 class SenLeaf(SenNode):
+    def check(senNode):
+        if senNode.op == None:
+            return False
+        if len(senNode.args) == 1:
+            return False
+        if type(senNode.args[0]) == str:
+            return False
+        if senNode.is_leaf == True:
+            return False
+        return True
+    
     def __init__(self, sym : str):
         super().__init__([sym], None)
     
+    @property
     def is_leaf(self):
         return True
     
