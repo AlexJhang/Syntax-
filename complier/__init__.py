@@ -5,7 +5,7 @@ from util import find_list_idx, find_sym_reverse, debug_recursive
 from util import firstFalse, firstTrue, allTrue
 from util import isNum, isWord
 from complier.symbolType import string2Const, check_symbol_type, SymbolType
-from complier.senNode import SenNode, CtlNode
+from complier.senNode import SenNode, CtlNode, SenLeaf
 
 class SubString:
     def __init__(self, text, start = 0, end = None):
@@ -19,8 +19,6 @@ class SubString:
     def __str__(self):
         return self.text[self.start: self.end]
     
-        
- 
 class Buf_text:
     def __init__(self, output : list) -> None:
         self.buf = ""
@@ -134,32 +132,16 @@ Symbol_Split = ['(','[','{']
 Symbol_Split_rev = [')',']','}']
 
 
-class SenLeaf(SenNode):
-    def __init__(self, sym : str):
-        super().__init__([sym], None)
-    
-    def is_leaf(self):
-        return True
-    
-    @property
-    def val(self):
-        return self.symbol_list[0]
-    
-    def __eq__(self, __value) -> bool:
-        if type(__value) == str:
-            return self.val == __value
-        else:
-            return super().__eq__(__value)
 
 def check_node(senNode : SenNode):
     #print(senNode)    
     assert isinstance(senNode, SenNode), senNode
-    assert type(senNode.symbol_list) == list , senNode
+    assert type(senNode.args) == list , senNode
 
     if senNode.is_leaf():
         return 
     else:
-        for w in senNode.symbol_list:
+        for w in senNode.args:
             check_node(w)
 
 def check_build_split(senNode : SenNode):
@@ -167,23 +149,23 @@ def check_build_split(senNode : SenNode):
     
     if type(senNode) == SenLeaf:
         assert senNode.op == None
-        assert len(senNode.symbol_list) == 1
-        assert type(senNode.symbol_list[0]) == str
+        assert len(senNode.args) == 1
+        assert type(senNode.args[0]) == str
         assert senNode.is_leaf() == True
         return           
     elif type(senNode) == SenNode:
-        if len(senNode.symbol_list) == 1 and senNode.op == None:
+        if len(senNode.args) == 1 and senNode.op == None:
             raise('no reduce')
         
         assert senNode.is_leaf() == False
         
-        for w in senNode.symbol_list:
+        for w in senNode.args:
             check_build_split(w)
     else:
         raise()
             
 def build_comma(senNode : SenNode) -> SenNode:
-    sym_list = senNode.symbol_list
+    sym_list = senNode.args
     for i,w in enumerate(sym_list):
         if type(w) != SenLeaf:
             sym_list[i] = build_comma(sym_list[i])
@@ -256,11 +238,11 @@ def reduce_node(senNode : SenNode) -> SenNode:
     
     #print('r ',senNode)
     if len(senNode) == 1 and senNode.op == None and (not senNode.is_leaf()):
-        if isinstance(senNode.symbol_list[0], SenNode):
+        if isinstance(senNode.args[0], SenNode):
             #print('rr')
-            return reduce_node(senNode.symbol_list[0])
+            return reduce_node(senNode.args[0])
     
-    senNode.symbol_list = [reduce_node(w) for w in senNode]
+    senNode.args = [reduce_node(w) for w in senNode]
     return senNode
     
 
@@ -394,7 +376,7 @@ def build_oper(senNode : SenNode) -> SenNode:
     else:
         assert type(senNode) == SenNode, senNode
         
-        sym_list = senNode.symbol_list
+        sym_list = senNode.args
         if len(sym_list) == 0:
             return senNode    
     
@@ -451,7 +433,7 @@ def build_oper(senNode : SenNode) -> SenNode:
     
     #print('-3',res_list)
     if findOP == True:
-        resNode.symbol_list = [build_oper(w) for w in resNode.symbol_list]
+        resNode.args = [build_oper(w) for w in resNode]
         return SenNode([resNode],senNode.op)
     
     else:
@@ -480,7 +462,7 @@ def build_oper_1(sym_list):
     IsNode = False
     if type(sym_list) == SenNode:
         senNode = sym_list
-        sym_list = senNode.symbol_list
+        sym_list = senNode.args
         IsNode = True
     
     if type(sym_list) == str:
@@ -545,11 +527,11 @@ def build_oper_1(sym_list):
         if IsNode == True:
             assert type(senNode) == SenNode
             #print(senNode.op)
-            senNode.symbol_list = res_list
+            senNode.args = res_list
             if len(res_list) == 1:
                 assert type(res_list[0]) == SenNode;
                 if res_list[0].op == None and res_list[0].is_leaf() == False:
-                    senNode.symbol_list = res_list[0].symbol_list
+                    senNode.args = res_list[0].args
                 
             return senNode
         else:
@@ -562,7 +544,7 @@ def build_oper_1(sym_list):
         if IsNode == True:
             assert type(senNode) == SenNode
             #print(senNode.op)
-            senNode.symbol_list = [SenNode(res_list, op)]
+            senNode.args = [SenNode(res_list, op)]
             return senNode
         else:
             return SenNode(res_list, op)

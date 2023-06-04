@@ -9,16 +9,17 @@ class SenNode:
         self.__args = args
         self.__op = op
         
+        
     @property
     def op(self):
         return self.__op
     
     @property
-    def symbol_list(self):
+    def args(self):
         return self.__args
-    
-    @symbol_list.setter
-    def symbol_list(self, __value):
+
+    @args.setter
+    def args(self, __value):
         self.__args = __value
     
     def __str__(self) -> str:
@@ -46,7 +47,7 @@ class SenNode:
     def __eq__(self, __value) -> bool:
         if type(__value) != type(self):
             return False
-        if self.__args != __value.symbol_list:
+        if self.__args != __value.args:
             return False
         if self.op != __value.op:
             return False
@@ -275,6 +276,23 @@ class SenNode:
 class NullNode(SenNode):
     def __init__(self) -> None:
         super().__init__([], None)
+
+class SenLeaf(SenNode):
+    def __init__(self, sym : str):
+        super().__init__([sym], None)
+    
+    def is_leaf(self):
+        return True
+    
+    @property
+    def val(self):
+        return self.args[0]
+    
+    def __eq__(self, __value) -> bool:
+        if type(__value) == str:
+            return self.val == __value
+        else:
+            return super().__eq__(__value)
 
 class CtlNode(SenNode):
     def create(senNode):
