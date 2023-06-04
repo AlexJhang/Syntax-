@@ -240,110 +240,7 @@ def reduce_node(senNode : SenNode) -> SenNode:
     senNode.map(reduce_node)
     return senNode
     
-
-def build_split_1(symbol_list : list, skip_semicolon = False):
-    ''' create nodes by split symbols, ()[]{}. '''
-    
-    #print(symbol_list)
-    
-    if len(symbol_list) == 1:
-        return symbol_list
-    
-    next_step = False
-    # scan ,;
-    cnt_sym_split = {
-        '(' : 0, '[' : 0, '{' : 0
-    }
-    res_list = []
-    
-    last_i = 0
-    last_w = None
-    for i, w in enumerate(symbol_list):
-        if w in Symbol_Split:
-            cnt_sym_split[w] += 1
-        elif w in Symbol_Split_rev:
-            cnt_sym_split[Symbol_Split_map[w]] -= 1
-        #print(w, cnt_sym_split,sum(cnt_sym_split.values()))
-        if (w in  ",;") and (sum(cnt_sym_split.values()) == 0):
-            res_list.append(SenNode(symbol_list[last_i : i], w))
-            last_i = i+1
-            last_w = w
-            
-    if last_i != len(symbol_list):
-        if len(res_list) == 0:
-            assert last_i == 0
-            next_step = True
-        else:
-            
-            assert last_w != None
-            res_list.append(SenNode(symbol_list[last_i : ], last_w))
-        
-    #print(res_list)
-    #print('-1')
-    #print("next_step =", next_step)
-    if next_step == False:
-        if len(res_list) == 1:
-            return build_split(res_list[0])
-        else:
-            return SenNode([build_split(ls, skip_semicolon = True) for ls in res_list], None)
-    
-    # scan (){}[]
-    idx_start = find_list_idx(symbol_list, Symbol_Split)
-    #print(symbol_list, idx_start)
-    #print('-2',idx_start)    
-    if idx_start == -1: # no (){}[]
-        if type(symbol_list) == list:
-            return symbol_list
-        elif type(symbol_list) == SenNode:
-            return symbol_list
-        else:
-            raise('')
-    else:
-        #
-        # found (){}[]
-        # ex. 
-        #    case I : 
-        #       "a(b)c"  -> [a,[b],c]
-        #       "a(b)"   -> [a,[b]]
-        #       "(b)c"   -> [[b],c]
-        #    case II:
-        #       "(a)"    -> [a]
-        # 
-               
-        sp = symbol_list[idx_start]
-        idx_end = find_sym_reverse(symbol_list[idx_start + 1:],Symbol_Split_map[sp], sp)
-        idx_end += idx_start + 1
-        #print('-3',idx_start, idx_end)
-        #print(symbol_list[:idx_start], symbol_list[idx_start + 1:idx_end], symbol_list[idx_end+1:])
-        
-        res = []
-        if idx_start > 0:
-            #res += build_split(symbol_list[:idx_start])
-            ls = build_split(symbol_list[:idx_start])
-            if type(ls) == list:
-                res += ls
-            else:
-                res.append(ls)
-            
-        res.append(SenNode([build_split(symbol_list[idx_start + 1:idx_end])],sp))
-        
-        if idx_end + 1 < len(symbol_list):
-            ls = build_split(symbol_list[idx_end+1:])
-            if type(ls) == list:
-                res += ls
-            else:
-                res.append(ls)
-            
-        if type(symbol_list) == SenNode:
-            res = SenNode(res, symbol_list.op)
-        
-        #print('>>', res)
-        if len(res) == 1: #case I
-            return res[0]
-        else:             #case II
-            return res
-     
-            
+          
 def create_nodes(symbol_list : list):
     if len(symbol_list) == 0:
         return
@@ -366,154 +263,25 @@ def build_oper(senNode : SenNode) -> SenNode:
     
     if isinstance(senNode,SenLeaf):
         return senNode
-    elif type(senNode) == list:
-        sym_list = senNode
-    else:
-        assert type(senNode) == SenNode, senNode
-        
-        sym_list = senNode.args
-        if len(sym_list) == 0:
-            return senNode    
     
-    res_list = []
-    op = None
-    findOP = False
+    if len(senNode) == 0:
+        return senNode  
     
     print(senNode)
     
-    
-    #
-    # operator ,ex. +-*/
-    #
-    if findOP == False:
-        resNode = OperNode.check_create(sym_list)
+    for node in [OperNode, CtlNode]:
+        resNode = OperNode.check_create(senNode)
         if resNode != None:
-            findOP = True
-    
-    
-    #
-    # control ,ex. for, while, if ...
-    #
-    if findOP == False:
-
-        resNode = CtlNode.check_create(sym_list)
-        if resNode != None:
-            findOP = True
-        
-    
-    #print('-3',res_list)
-    if findOP == True:
-        print('>',resNode)        
-        resNode.map(build_oper)
-        if type(senNode) == list:
-            return resNode
-        else:
-            return SenNode([resNode],senNode.op)
-    
-    else:
-        res_list =  list(map(build_oper,sym_list))
-        if type(senNode) == list:
-            return SenNode(res_list, None)
-        return SenNode(res_list, senNode.op)
-    
-    
-
-def build_oper_1(sym_list):
-    
-    # judge class
-    IsNode = False
-    if type(sym_list) == SenNode:
-        senNode = sym_list
-        sym_list = senNode.args
-        IsNode = True
-    
-    if type(sym_list) == str:
-        #return SenLeaf(senNode)
-        return SenLeaf(sym_list)
-    
-    if type(sym_list) == list:
-        if len(sym_list) == 1:
-            if type(sym_list[0]) == str:
-                return SenLeaf(sym_list[0])
-    
-
-    #
-    # process operators
-    #
-    
-    #print('-1')
-    NoOp = True
-    op = None
-    res_list = []    
-    if len(sym_list) > 0:
-        # binary operator
-        for op_list in Oper.oper_oreder_table:
-            idx = find_list_idx(sym_list, op_list, reverse= True)
-            #print(idx)
-            if idx != -1:
-                op = sym_list[idx]
-                #print('op=',op)
-                #print('-1.1')
-                res_list = [
-                    build_oper(sym_list[:idx]),build_oper(sym_list[idx+1:])
-                ]
-                assert type(res_list[0]) == SenNode
-                assert type(res_list[1]) == SenNode
-                
-                NoOp = False
-
-        # uinary operator
-        for op_list in ['!']:
-            idx = find_list_idx(sym_list, op_list, reverse= True)
-            print(idx, sym_list)
-            if idx != -1:
-                #res_sen = SenNode([
-                #    build_oper(senNode[idx+1])
-                #], op)
-                op = sym_list[idx]
-                res_list = [
-                    build_oper(sym_list[idx+1])
-                ]
-                assert type(res_list[0]) == SenNode
-                NoOp = False
-    
-    #
-    # final
-    #
-    if NoOp == True:
-        #print('-2')
-        #sym_list = SenNode([build_oper(w) for w in sym_list], None)
-        res_list = [build_oper(w) for w in sym_list]
-        #print('>>',res_list)
-        
-        if IsNode == True:
-            assert type(senNode) == SenNode
-            #print(senNode.op)
-            senNode.args = res_list
-            if len(res_list) == 1:
-                assert type(res_list[0]) == SenNode;
-                if res_list[0].op == None and res_list[0].is_leaf == False:
-                    senNode.args = res_list[0].args
-                
-            return senNode
-        else:
-            return SenNode(res_list, op)
-    else:
+            #print('>',resNode)        
+            resNode.map(build_oper)
             
-        #print('-3', IsNode, op)
-        
-        assert type(res_list) == list
-        if IsNode == True:
-            assert type(senNode) == SenNode
-            #print(senNode.op)
-            senNode.args = [SenNode(res_list, op)]
-            return senNode
-        else:
-            return SenNode(res_list, op)
+            return SenNode([resNode],senNode.op) if isinstance(senNode, SenNode) else resNode
     
-
-    
-    
+    # no found type
+    res_list =  list(map(build_oper,senNode))
+    if type(senNode) == list:
+        return SenNode(res_list, None)
+    return SenNode(res_list, senNode.op)
     
         
 
