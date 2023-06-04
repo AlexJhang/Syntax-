@@ -5,7 +5,7 @@ sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 #print(sys.path)
 
-from complier import build_node, parse_words, SenNode, SenLeaf, CtlNode
+from complier import build_node, parse_words, SenNode, SenLeaf, CtlNode, OperNode
 from complier import check_node, check_build_split
 
 def compile(text):
@@ -16,7 +16,7 @@ TestCase = [
     ("a (b)",SenNode([SenLeaf('a'), SenNode([SenLeaf('b')],'(')],None)),
     ("a(b(c))",SenNode([SenLeaf('a'), SenNode([SenLeaf('b'), SenNode([SenLeaf('c')],'(')], '(')],None)),
     
-    ("a+=1",SenNode([SenLeaf('a'), SenLeaf('1')],'+=')),
+    ("a+=1",OperNode([SenLeaf('a'), SenLeaf('1')],'+=')),
     ("a+=1;",SenNode([compile("a+=1")],';')),
     ("{a+=1;}",SenNode([compile("a+=1;")],'{')),
     ("a+=1;b+=1;",SenNode([compile("a+=1;"),compile("b+=1;")],None)),
@@ -24,10 +24,10 @@ TestCase = [
     ("{a+=1;b+=1;}",
         SenNode([
             SenNode([
-                    SenNode([SenLeaf('a'), SenLeaf('1')],'+='),
+                    OperNode([SenLeaf('a'), SenLeaf('1')],'+='),
                 ],';'),
             SenNode([
-                    SenNode([SenLeaf('b'), SenLeaf('1')],'+='),
+                    OperNode([SenLeaf('b'), SenLeaf('1')],'+='),
                 ],';'),
         ],'{')
      ),

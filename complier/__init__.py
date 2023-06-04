@@ -269,10 +269,10 @@ def build_oper(senNode : SenNode) -> SenNode:
     
     print(senNode)
     
-    for node in [OperNode, CtlNode]:
-        resNode = OperNode.check_create(senNode)
+    for nodeClass in [OperNode, CtlNode]:
+        resNode = nodeClass.check_create(senNode)
         if resNode != None:
-            #print('>',resNode)        
+            print('>',resNode)        
             resNode.map(build_oper)
             
             return SenNode([resNode],senNode.op) if isinstance(senNode, SenNode) else resNode

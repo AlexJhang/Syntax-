@@ -55,6 +55,7 @@ class SenNode:
     
     def __eq__(self, __value) -> bool:
         if type(__value) != type(self):
+            #print(type(__value), type(self))
             return False
         if self.__args != __value.args:
             return False
@@ -201,12 +202,14 @@ class SenNode:
                 return vars[a0]
             else:
                 return a0  
+        
         #
         # function
         #
         
         #print("-3")
         if self._check_function():
+            raise()
             #print("-4")
             
             #
@@ -247,10 +250,11 @@ class SenNode:
             if len(self) == 1:
                 return self[0].compute(vars = vars)
             for w in self:
-                assert type(w) == SenNode, w
+                #assert type(w) == SenNode, w
                 w.compute(vars = vars)
             return None
         
+        raise()
         #
         # uinary operator, ex. ~ ! 
         #
@@ -319,7 +323,28 @@ class SenLeaf(SenNode):
         else:
             return super().__eq__(__value)
 
+
+    
 class CtlNode(SenNode):
+    #  1. if(){} ... else if(){} ...else{}
+    #  2. while()
+    #  3. for(;;){}
+    def check_create(senNode : SenNode):
+        if len(senNode) < 1:
+            return None
+        
+        if senNode[0].is_leaf == False:
+            return
+        
+        op = senNode[0].val
+        if op == "if":
+            return ControlIf.check_create(senNode)
+        elif op == "while":
+            pass
+        elif op == "for":
+            pass
+        return None
+
     def create(senNode):
         return CtlNode([senNode[1], senNode[2]],senNode[0].val)
     
@@ -334,7 +359,7 @@ class CtlNode(SenNode):
             return False
         return True
     
-    def check_create(senNode : SenNode):
+    def check_create_0(senNode : SenNode):
         if CtlNode.check(senNode):
             return CtlNode.create(senNode)
         return None
@@ -346,6 +371,66 @@ class CtlNode(SenNode):
         if self[0].compute(vars=vars) == 1:
             return self[1].compute(vars=vars)
 
+class ControlIf(CtlNode):
+    def check_create(senNode : SenNode):
+        if senNode[0].val != "if":
+            return None
+        
+        resNode = ControlIf([],"if")
+        if senNode[1].op == '(' and senNode[2].op == '{':
+            resNode.add_branch(senNode[1], senNode[2])
+        
+        if resNode.branch_num == 0:
+            return None
+    
+        
+        resNode.finish_edit()
+        return resNode
+        
+    def __init__(self, args: list, op) -> None:
+        super().__init__(args, op)
+        
+        self.__condition = []
+        self.__branch = []
+    
+    @property
+    def branch_num(self):
+        return len(self.__branch)
+        
+    def add_branch(self, condNode : SenNode, branNode : SenNode):
+        idx = len(self)
+        self.__condition.append(idx)
+        self.__branch.append(idx + 1)
+        self.args.append(condNode)
+        self.args.append(branNode)
+    
+    def add_else(self, branNode : SenNode):
+        self.__branch.append(branNode)
+        
+    def finish_edit(self):
+        #for i in range(len(self.__condition)):
+        #    self.args.append(self.__condition[i])
+        #    self.args.append(self.__branch[i])
+        pass
+        #self.edit = False
+    
+    def compute(self, vars=dict()):
+        print('>',self.__condition)
+        print('>',self.__branch)
+        for con, bran in zip(self.__condition, self.__branch):
+            print(con)
+            if self[con].compute(vars=vars) == 1:
+                print('ok')
+                print(vars)
+                print(bran)
+                self[bran].compute(vars=vars)
+                #assert 0
+                print(vars)
+                return 
+        #self.__branch[-1].compute(vars=vars)
+        return
+        
+    
 class OperNode(SenNode):
     def check_create(senNode : SenNode):
         #
@@ -355,10 +440,10 @@ class OperNode(SenNode):
             idx = find_list_idx(senNode, op_list, reverse= True)
             #if idx != -1:
             if idx > 0:
-                op = senNode[idx].val
-                res_list = [senNode[:idx], senNode[idx+1:]]
-                
-                return SenNode(res_list, op)
+                return OperNode(
+                    [senNode[:idx], senNode[idx+1:]],
+                    senNode[idx].val
+                    )
         #
         # uinary operator
         #    
@@ -373,7 +458,7 @@ class OperNode(SenNode):
                         op = '--x'
                     elif op == '++':
                         op = '++x'
-                    return SenNode(senNode[1:], op)
+                    return OperNode(senNode[1:], op)
         return None
 
 
@@ -382,7 +467,19 @@ class OperNode(SenNode):
         super().__init__(args, op)
         
     def compute(self, vars = dict()):
-                #
+        #
+        # uinary operator, ex. ~ ! 
+        #
+        if self.op in Oper.uinary_oper_compute.keys():
+            a0 = self[0].compute(vars = vars)
+            t = Oper.uinary_oper_compute[self.op](a0)
+            if self.op in ['++x','--x']:
+                vars[self[0].val] = t
+            return t
+
+        #assert len(self) == 2, self.__args
+        
+        #
         # binary operator, ex. + - * /  
         #
         if self.op in Oper.binary_oper_compute.keys():
@@ -404,6 +501,7 @@ class OperNode(SenNode):
                 b = Oper.binary_oper_compute[Oper.assign_binary_oper[self.op]](vars[a0], a1)
                 vars[a0] = b
             return vars[a0]
+    
 
 class FuncNode(SenNode):
     pass

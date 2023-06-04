@@ -14,11 +14,11 @@ if __name__ == '__main__':
     #text = ''
     
     #text = "a+=1"
-    text = 'b*=1+2*3 + square(a)'
+    #text = 'b*=1+2*3 + square(a)'
     #text = '{a+=1;b+=1;{++a;{++b;}}}'
-    #text = "3 + 6"
-    #text = "if(true){b+=square(a);}"
-    #text = "if(1){a+=1;b+=1;}"
+    #text = "++3 + 6"
+    #text = "if(true){a+=1;b+=1;}"
+    text = "if(0){a+=1;b+=1;}"
     #text="{a+=1;b+=1;}"
     symbol_list = parse_words(text)
     print("words : ",symbol_list)
