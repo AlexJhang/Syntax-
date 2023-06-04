@@ -377,12 +377,27 @@ class ControlIf(CtlNode):
             return None
         
         resNode = ControlIf([],"if")
-        if senNode[1].op == '(' and senNode[2].op == '{':
-            resNode.add_branch(senNode[1], senNode[2])
+        if senNode[1].op == '(' and senNode[2].op in '{;':
+            resNode.__add_branch(senNode[1], senNode[2])
+        
+        # else if
+        idx = 3
+
+        while (idx + 4) <= len(senNode):
+            #print('>>',senNode[idx:idx+4])
+            if senNode[idx].val == "else" and senNode[idx+1].val == "if" and \
+                senNode[idx+2].op == '(' and senNode[idx+3].op in '{;':
+                resNode.__add_branch(senNode[idx+2], senNode[idx+3])
+            idx += 4
+        
+        # else
+        #print('>',len(senNode), resNode)
+        if (idx + 2) <= len(senNode):
+            if senNode[idx].val == "else" and senNode[idx+1].op in '{;':
+                resNode.__add_else(senNode[idx+1])
         
         if resNode.branch_num == 0:
             return None
-    
         
         resNode.finish_edit()
         return resNode
@@ -397,15 +412,17 @@ class ControlIf(CtlNode):
     def branch_num(self):
         return len(self.__branch)
         
-    def add_branch(self, condNode : SenNode, branNode : SenNode):
+    def __add_branch(self, condNode : SenNode, branNode : SenNode):
         idx = len(self)
         self.__condition.append(idx)
         self.__branch.append(idx + 1)
         self.args.append(condNode)
         self.args.append(branNode)
     
-    def add_else(self, branNode : SenNode):
-        self.__branch.append(branNode)
+    def __add_else(self, branNode : SenNode):
+        idx = len(self)
+        self.__branch.append(idx)
+        self.args.append(branNode)
         
     def finish_edit(self):
         #for i in range(len(self.__condition)):
@@ -418,17 +435,18 @@ class ControlIf(CtlNode):
         print('>',self.__condition)
         print('>',self.__branch)
         for con, bran in zip(self.__condition, self.__branch):
-            print(con)
+            #print(con)
             if self[con].compute(vars=vars) == 1:
-                print('ok')
-                print(vars)
-                print(bran)
+                #print('ok')
+                #print(vars)
+                #print(bran)
                 self[bran].compute(vars=vars)
                 #assert 0
-                print(vars)
+                #print(vars)
                 return 
-        #self.__branch[-1].compute(vars=vars)
-        return
+        if len(self.__branch) > len(self.__condition): # case : else 
+            self[self.__branch[-1]].compute(vars=vars)
+
         
     
 class OperNode(SenNode):
@@ -493,7 +511,7 @@ class OperNode(SenNode):
             a0 = self[0].leaf_val()
             a1 = self[1].compute(vars = vars)
             assert check_symbol_type(a0) == SymbolType.Variable
-            print(a0,a1)
+            #print(a0,a1)
             assert a0 in vars, f"{a0}  {vars}"
             if self.op == '=':
                 vars[a0] = a1

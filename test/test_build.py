@@ -5,8 +5,10 @@ sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 #print(sys.path)
 
-from complier import build_node, parse_words, SenNode, SenLeaf, CtlNode, OperNode
+from complier import build_node, parse_words
 from complier import check_node, check_build_split
+from complier import SenNode, SenLeaf, CtlNode, OperNode
+from complier.senNode import ControlIf
 
 def compile(text):
     return build_node(parse_words(text))
@@ -31,19 +33,17 @@ TestCase = [
                 ],';'),
         ],'{')
      ),
-    ("if(true){a+=1;b+=1;}",CtlNode([
+    ("if(true){a+=1;b+=1;}",ControlIf([
         SenNode([SenLeaf('true')],'('),
         compile("{a+=1;b+=1;}")
         ],'if')),
-    ("if(true){a+=1;b+=1;}else{return;}",SenNode([
-        SenLeaf('if'),
+    ("if(true){a+=1;b+=1;}else{return;}",ControlIf([
         SenNode([SenLeaf('true')],'('),
         compile("{a+=1;b+=1;}"),
-        SenLeaf('else'),
-        SenNode([compile('return;')],'{')
-        ],None)),
+        SenNode([SenLeaf('return'), SenNode([],';')],'{')
+        ],'if')),
     ("f(0);",SenNode([SenLeaf('f'), SenNode([SenLeaf('0')],'(')],';')),
-    ("while(1){};",SenNode([SenLeaf('while'), 
+    ("while(1){}",SenNode([SenLeaf('while'), 
             SenNode([SenLeaf('1')],'('),
             SenNode([],'{')
         ],';'))

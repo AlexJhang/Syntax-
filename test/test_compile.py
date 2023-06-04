@@ -18,7 +18,7 @@ if __name__ == '__main__':
     #text = '{a+=1;b+=1;{++a;{++b;}}}'
     #text = "++3 + 6"
     #text = "if(true){a+=1;b+=1;}"
-    text = "if(0){a+=1;b+=1;}"
+    text = "if(1){a+=1;b+=1;}else{a+=10;}"
     #text="{a+=1;b+=1;}"
     symbol_list = parse_words(text)
     print("words : ",symbol_list)

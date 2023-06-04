@@ -165,16 +165,33 @@ def build_comma(senNode : SenNode) -> SenNode:
     last_idx = 0
     res=[]
     
+    def check_KeyWord(w):
+        if not w.is_leaf:
+            return False
+        return check_symbol_type(w.val) == SymbolType.KeyWord
+        
+    
     for i,w in enumerate(sym_list):
-        if w in [';',',']:
+        if w in [';',','] or check_KeyWord(w):
             w = w.val
-            res.append(SenNode(sym_list[last_idx:i],w))
-            last_idx = i+1
+            last_w = None
+            if w in ";,":                
+                res.append(SenNode(sym_list[last_idx:i],w))
+                last_idx = i+1
+            else:
+                res += (sym_list[last_idx:i+1])
+                last_idx = i+1
+            last_w = w
+            
             
     if last_idx == 0:
         return SenNode(sym_list, senNode.op)
     if last_idx < len(sym_list):
-        res.append(SenNode(sym_list[last_idx:],None))
+        if last_w in ";,":
+            res.append(SenNode(sym_list[last_idx:],None))
+        else:
+            res += sym_list[last_idx:]
+        
     return SenNode(res, senNode.op)
     
 def build_split(symbol_list : list):
@@ -194,6 +211,7 @@ def build_split(symbol_list : list):
     senNode = SenNode(res, None)
     senNode = format_node(senNode)
     senNode = reduce_node(senNode)
+    print('split',senNode)
     
     senNode = build_comma(senNode)
     #print('comma : ',senNode)
@@ -272,7 +290,7 @@ def build_oper(senNode : SenNode) -> SenNode:
     for nodeClass in [OperNode, CtlNode]:
         resNode = nodeClass.check_create(senNode)
         if resNode != None:
-            print('>',resNode)        
+            #print('>',resNode)        
             resNode.map(build_oper)
             
             return SenNode([resNode],senNode.op) if isinstance(senNode, SenNode) else resNode
