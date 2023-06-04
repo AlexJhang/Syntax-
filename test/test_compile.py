@@ -14,10 +14,10 @@ if __name__ == '__main__':
     #text = ''
     
     #text = "a+=1"
-    #text = 'b*=1+2*3'
+    text = 'b*=1+2*3 + square(a)'
     #text = '{a+=1;b+=1;{++a;{++b;}}}'
     #text = "3 + 6"
-    text = "if(true){b+=square(a);}"
+    #text = "if(true){b+=square(a);}"
     #text = "if(1){a+=1;b+=1;}"
     #text="{a+=1;b+=1;}"
     symbol_list = parse_words(text)
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     vars={
         'square': lambda x:x*x,
         'true':1,
-        'a' : 9,
+        'a' : 10,
         'b' : 15
     }
     print(vars)

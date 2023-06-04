@@ -1,5 +1,6 @@
 from complier.symbolType import string2Const, check_symbol_type, SymbolType
 import complier.operator as Oper
+from util import find_list_idx
 
 class SenNode:
     def __init__(self, args : list, op) -> None:
@@ -71,9 +72,8 @@ class SenNode:
     
     @property
     def is_leaf(self):
-        #if (self.op == None) and len(self.__args) == 1:
-        #    return type(self[0]) == str
         return False
+    
     def leaf_val(self):
         assert self.is_leaf
         return self[0]
@@ -323,12 +323,87 @@ class CtlNode(SenNode):
     def create(senNode):
         return CtlNode([senNode[1], senNode[2]],senNode[0].val)
     
-    def __init__(self, symbol_list: list, op) -> None:
-        super().__init__(symbol_list, op)
+    def check(senNode : SenNode):
+        if type(senNode) != SenNode:
+            return False
+        if type(senNode[0]) != SenLeaf:
+            return False
+        if check_symbol_type(senNode[0].val) != SymbolType.KeyWord:
+            return False
+        if len(senNode) < 2:
+            return False
+        return True
+    
+    def check_create(senNode : SenNode):
+        if CtlNode.check(senNode):
+            return CtlNode.create(senNode)
+        return None
+    
+    def __init__(self, args: list, op) -> None:
+        super().__init__(args, op)
         
     def compute(self, vars = dict()):
         if self[0].compute(vars=vars) == 1:
             return self[1].compute(vars=vars)
+
+class OperNode(SenNode):
+    def check_create(senNode : SenNode):
+        #
+        # binary operator
+        #
+        for op_list in Oper.oper_oreder_table:
+            idx = find_list_idx(senNode, op_list, reverse= True)
+            #if idx != -1:
+            if idx > 0:
+                op = senNode[idx].val
+                res_list = [senNode[:idx], senNode[idx+1:]]
+                
+                return SenNode(res_list, op)
+        #
+        # uinary operator
+        #    
+        if type(senNode[0]) == SenLeaf and len(senNode) == 2:
+            for op_list in [['!','-','--','++']]:
+                op = senNode[0].val
+                if op in op_list:
+                    
+                    if op == '-':
+                        op = '-x'
+                    elif op == '--':
+                        op = '--x'
+                    elif op == '++':
+                        op = '++x'
+                    return SenNode(senNode[1:], op)
+        return None
+
+
+
+    def __init__(self, args: list, op) -> None:
+        super().__init__(args, op)
+        
+    def compute(self, vars = dict()):
+                #
+        # binary operator, ex. + - * /  
+        #
+        if self.op in Oper.binary_oper_compute.keys():
+            a0 = self[0].compute(vars = vars)
+            a1 = self[1].compute(vars = vars)
+            return Oper.binary_oper_compute[self.op](a0, a1)
+        #
+        # assign operator, ex. = += *= 
+        #
+        elif self.op in ['='] + list(Oper.assign_binary_oper.keys()):
+            a0 = self[0].leaf_val()
+            a1 = self[1].compute(vars = vars)
+            assert check_symbol_type(a0) == SymbolType.Variable
+            print(a0,a1)
+            assert a0 in vars, f"{a0}  {vars}"
+            if self.op == '=':
+                vars[a0] = a1
+            else: # in Oper.assign_binary_oper.keys()
+                b = Oper.binary_oper_compute[Oper.assign_binary_oper[self.op]](vars[a0], a1)
+                vars[a0] = b
+            return vars[a0]
 
 class FuncNode(SenNode):
     pass

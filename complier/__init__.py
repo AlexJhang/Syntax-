@@ -5,7 +5,7 @@ from util import find_list_idx, find_sym_reverse, debug_recursive
 from util import firstFalse, firstTrue, allTrue
 from util import isNum, isWord
 from complier.symbolType import string2Const, check_symbol_type, SymbolType
-from complier.senNode import SenNode, CtlNode, SenLeaf
+from complier.senNode import SenNode, CtlNode, SenLeaf, OperNode
 
 class SubString:
     def __init__(self, text, start = 0, end = None):
@@ -214,11 +214,10 @@ def format_node(sym) -> SenNode:
         return sym
     
     if type(sym) == SenNode:
-        res = map(format_node, sym)
+        res = list(map(format_node, sym))
         op = sym.op
-        return sym
     elif type(sym) == list:
-        res = map(format_node, sym)
+        res = list(map(format_node, sym))
         op = None
     else:
         raise()
@@ -365,7 +364,7 @@ def create_nodes(symbol_list : list):
 
 def build_oper(senNode : SenNode) -> SenNode:
     
-    if type(senNode) == SenLeaf:
+    if isinstance(senNode,SenLeaf):
         return senNode
     elif type(senNode) == list:
         sym_list = senNode
@@ -382,73 +381,40 @@ def build_oper(senNode : SenNode) -> SenNode:
     
     print(senNode)
     
-    #
-    # binary operator
-    #
-    for op_list in Oper.oper_oreder_table:
-        idx = find_list_idx(sym_list, op_list, reverse= True)
-        #if idx != -1:
-        if idx > 0:
-            op = sym_list[idx].val
-            res_list = [sym_list[:idx], sym_list[idx+1:]]
-            
-            resNode = SenNode(res_list, op)
-            findOP = True
-            #return SenNode(res_list, op)
-    #
-    # uinary operator
-    #
     
-    #print('-2',sym_list)
-    if type(sym_list[0]) == SenLeaf and len(sym_list) == 2:
-        for op_list in [['!','-','--','++']]:
-            op = sym_list[0].val
-            if op in op_list:
-                
-                if op == '-':
-                    op = '-x'
-                elif op == '--':
-                    op = '--x'
-                elif op == '++':
-                    op = '++x'
-                res_list = sym_list[1:]
-                
-                resNode = SenNode(res_list, op)
-                findOP = True
-                #return SenNode(sym_list[1:], op)
+    #
+    # operator ,ex. +-*/
+    #
+    if findOP == False:
+        resNode = OperNode.check_create(sym_list)
+        if resNode != None:
+            findOP = True
+    
     
     #
     # control ,ex. for, while, if ...
     #
-    if check_oper_control(senNode):
-        resNode = CtlNode.create(senNode)
-        
+    if findOP == False:
+
+        resNode = CtlNode.check_create(sym_list)
         if resNode != None:
             findOP = True
         
     
     #print('-3',res_list)
     if findOP == True:
+        print('>',resNode)        
         resNode.map(build_oper)
-        return SenNode([resNode],senNode.op)
+        if type(senNode) == list:
+            return resNode
+        else:
+            return SenNode([resNode],senNode.op)
     
     else:
-        res_list = [build_oper(w) for w in sym_list]
+        res_list =  list(map(build_oper,sym_list))
         if type(senNode) == list:
             return SenNode(res_list, None)
         return SenNode(res_list, senNode.op)
-
-def check_oper_control(senNode : SenNode) -> bool:
-    if type(senNode) != SenNode:
-        return False
-    if type(senNode[0]) != SenLeaf:
-        return False
-    if check_symbol_type(senNode[0].val) != SymbolType.KeyWord:
-        return False
-    if len(senNode) < 2:
-        return False
-    return True
-    
     
     
 
