@@ -209,39 +209,22 @@ class SenNode:
         
         #print("-3")
         if self._check_function():
-            raise()
             #print("-4")
             
             #
             #  key word function
             #
             func_name = self[0].leaf_val()
-            if func_name == "if":
-                assert len(self) >= 2
-                if self[2].op == '{':
-                    if self[1].compute(vars = vars) == 1:
-                        self[2].compute(vars = vars)
-                        pass
-                elif self[2].op == ';':
-                    pass
-                else:
-                    raise()
-                return None
-                
-            if func_name == "while":
-                pass
-            #  TODO : others key worf function, like for, switch
-            else: 
             #
             # self-define functions
             #
-                assert func_name in vars, f"{func_name}  {vars}"
-                assert len(self) == 2
-                if callable(vars[func_name]):
-                    args = [w.compute(vars = vars) for w in self[1]]
-                    #print('args= ', args, func_name)
-                    return vars[func_name](*args)
-                #if func_name
+            assert func_name in vars, f"{func_name}  {vars}"
+            assert len(self) == 2
+            if callable(vars[func_name]):
+                args = [w.compute(vars = vars) for w in self[1]]
+                #print('args= ', args, func_name)
+                return vars[func_name](*args)
+            #if func_name
             
         #
         # split operator, ex. ( [ {
@@ -340,9 +323,9 @@ class CtlNode(SenNode):
         if op == "if":
             return ControlIf.check_create(senNode)
         elif op == "while":
-            pass
+            return ControlWhile.check_create(senNode)
         elif op == "for":
-            pass
+            return ControlFor.check_create(senNode)
         return None
 
     def create(senNode):
@@ -371,6 +354,46 @@ class CtlNode(SenNode):
         if self[0].compute(vars=vars) == 1:
             return self[1].compute(vars=vars)
 
+class ControlWhile(CtlNode):
+    def check_create(senNode : SenNode):
+        if senNode[0].val != "while":
+            return None
+        if senNode[1].op == '(' and senNode[2].op in '{;':
+            return ControlWhile(senNode[1:3], 'while')
+        return None
+
+    def compute(self, vars=dict()):
+        while self[0].compute(vars = vars) != 0:
+            self[1].compute(vars = vars)
+
+class ControlFor(CtlNode):
+    def check_create(senNode : SenNode):
+        #print('>',senNode)
+        if len(senNode) < 3:
+            return None
+        if senNode[0].val != "for":
+            return None
+        if senNode[1].op != '(':
+            return None
+        if senNode[2].op not in ";{":
+            return None
+        if len(senNode[1]) != 3:
+            return None
+        if (senNode[1][0].op == ';') and (senNode[1][1].op == ';'):
+            return ControlFor(list(senNode[1]) + [senNode[2]], 'for')
+        return None
+    def compute(self, vars=dict()):
+        
+        #     for( 0  ;   1  ;  2 ){ 3 }
+        # ex. for(... ; i<10 ; i++){...}
+        self[0].compute(vars = vars)
+        
+        while self[1].compute(vars = vars) != 0:
+            self[3].compute(vars = vars)
+            
+            self[2].compute(vars = vars)
+            
+            
 class ControlIf(CtlNode):
     def check_create(senNode : SenNode):
         if senNode[0].val != "if":
@@ -436,7 +459,7 @@ class ControlIf(CtlNode):
         print('>',self.__branch)
         for con, bran in zip(self.__condition, self.__branch):
             #print(con)
-            if self[con].compute(vars=vars) == 1:
+            if self[con].compute(vars=vars) != 0:
                 #print('ok')
                 #print(vars)
                 #print(bran)
