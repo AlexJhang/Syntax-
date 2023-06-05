@@ -17,8 +17,8 @@ binary_oper_compute = {
     '*' : lambda a,b : a*b,
     '/' : lambda a,b : a/b,
     '%' : lambda a,b : a%b,
-    '&&': lambda a,b : a&b,
-    '||': lambda a,b : a|b,
+    '&': lambda a,b : a&b,
+    '|': lambda a,b : a|b,
     '<<': lambda a,b : a<<b,
     '>>': lambda a,b : a>>b,
     
