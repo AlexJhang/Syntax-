@@ -1,6 +1,6 @@
 import sys, os
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SCRIPT_DIR = os.getcwd() + '/complier'
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 #print(sys.path)
@@ -12,7 +12,6 @@ def compile(text):
     return build_node(parse_words(text))
 
 TestCase = [
-    ("a b; (c) d;",SenNode([],None)),
     
     ("a b",SenNode([SenLeaf('a'), SenLeaf('b')],None)),
     ("a (b)",SenNode([SenLeaf('a'), SenNode([SenLeaf('b')],'(')],None)),

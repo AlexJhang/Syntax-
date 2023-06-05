@@ -4,7 +4,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 from complier import SenNode
-from complier import parse_words, build_split, check_build_split, build_oper, reduce_node, check_node
+from complier import parse_words, build_node
 
 
 TestCase = [
@@ -20,13 +20,7 @@ TestCase = [
 
 def compute(text):
     symbol_list = parse_words(text)
-    senNode = build_split(symbol_list)
-    
-    check_build_split(senNode)
-    senNode = build_oper(senNode)
-    
-    senNode = reduce_node(senNode)
-    check_node(senNode)
+    senNode = build_node(symbol_list)
     
     vars = {}
     return senNode.compute(vars = vars)
@@ -34,6 +28,7 @@ def compute(text):
 
 
 if __name__ == '__main__':
+    
 
     i = 0
     for text, val_true in TestCase:
@@ -55,3 +50,4 @@ if __name__ == '__main__':
         i+=1
     if i == len(TestCase):
         print('=== PASS ===')
+    print(SCRIPT_DIR)
