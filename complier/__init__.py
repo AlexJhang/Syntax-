@@ -1,7 +1,7 @@
 from enum import Enum
 
 import complier.operator as Oper
-from util import find_list_idx, find_sym_reverse, debug_recursive 
+from util import find_list_idx, find_sym_reverse, flatten, debug_recursive 
 from util import firstFalse, firstTrue, allTrue
 from util import isNum, isWord
 from complier.symbolType import string2Const, check_symbol_type, SymbolType
@@ -104,8 +104,15 @@ def parse_words(text : str) -> list:
                 
         
     return res_list
-    
-            
+
+def parse_file(path:str):
+    with open(path, 'r') as f:
+        #for line in f.readlines():
+        #    print(line[:-1])
+        
+        res = flatten(list(map( lambda x: parse_words(x[:-1]), f.readlines())))
+    return res
+
 def find_code_region(symbol_list : list):
     if symbol_list[0] == '{':
         return find_sym_reverse(symbol_list[2:],')','(')

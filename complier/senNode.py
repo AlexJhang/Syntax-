@@ -10,6 +10,8 @@ class SenNode:
         self.__args = args
         self.__op = op
         
+        self.__parent = None
+        
         self.edit = True #switch to edit args
         
     @property
@@ -19,12 +21,24 @@ class SenNode:
     @property
     def args(self):
         return self.__args
+    
+    @property
+    def parent(self):
+        return self.__parent
 
     @args.setter
     def args(self, __value):
         assert self.edit
         self.__args = __value
     
+    
+    def set_parent(self, __parent):
+        print(self, __parent)
+        if __parent != None:
+            self.__parent = __parent
+        
+        if self.is_leaf == False:
+            map(lambda s: s.set_parent(self), self)
     
     # str
     def __str__(self) -> str:
