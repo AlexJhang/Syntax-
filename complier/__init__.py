@@ -204,11 +204,11 @@ def build_comma(senNode : SenNode) -> SenNode:
 def build_split(symbol_list : list):
     ''' create nodes by split symbols, ()[]{}. '''
     res = []
-    for w in symbol_list:
+    for w in  map(lambda s : SenLeaf(s), symbol_list):
         #print(w,res)
 
         if w in [')',']','}']:
-            rw = Symbol_Split_map[w]
+            rw = Symbol_Split_map[w.val]
             idx = find_list_idx(res, rw, reverse=True)
             assert idx >= 0
             res = res[:idx] + [SenNode(res[idx + 1:],rw)]
@@ -216,14 +216,13 @@ def build_split(symbol_list : list):
             res.append(w)
         
     senNode = SenNode(res, None)
-    senNode = format_node(senNode)
-    senNode = reduce_node(senNode)
+    senNode = reduce_node(format_node(senNode))
+    
     print('split',senNode)
     
     senNode = build_comma(senNode)
     #print('comma : ',senNode)
-    senNode = format_node(senNode)
-    senNode = reduce_node(senNode)
+    senNode = reduce_node(format_node(senNode))
     
     return senNode
 

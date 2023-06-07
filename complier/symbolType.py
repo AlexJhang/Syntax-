@@ -7,10 +7,6 @@ def string2Const(text : str):
     
     # case 0___
     if allTrue(text, isNum) and text[0] == '0':
-        #print(allTrue(text, isNum))
-        #i = allTrue(text, lambda x : x == '0')
-        #if i != True:
-        #    return int(text(i))
         return int(text)
     
     # string
@@ -39,6 +35,7 @@ class SymbolType(Enum):
 
 
 def check_symbol_type(sym : str):
+    ''' return SymbolType '''
     if type(sym) != str:
         return None
     #SymbolType.KeyWord

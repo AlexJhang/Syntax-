@@ -14,6 +14,8 @@ class SenNode:
         
         self.edit = True #switch to edit args
         
+        
+        
     @property
     def op(self):
         return self.__op
@@ -193,7 +195,7 @@ class SenNode:
         if len(self) >= 2:
             if self[0].is_leaf == False:
                 return False
-            if check_symbol_type(self[0].leaf_val())  not in [SymbolType.Variable, SymbolType.KeyWord] :
+            if self[0].symType  not in [SymbolType.Variable, SymbolType.KeyWord] :
                 return False
             if type(self[1]) != SenNode:
                 return False
@@ -206,8 +208,8 @@ class SenNode:
         print(self, self.op, self.is_leaf)
         
         if self.is_leaf:
-            a0 = self[0]
-            t0 = check_symbol_type(a0)
+            a0 = self.val
+            t0 = self.symType
             #print("leaf : ",a0 ,t0)
             if t0 == SymbolType.Constant:
                 return string2Const(a0)
@@ -252,40 +254,6 @@ class SenNode:
             return None
         
         raise()
-        #
-        # uinary operator, ex. ~ ! 
-        #
-        if self.op in Oper.uinary_oper_compute.keys():
-            a0 = self[0].compute(vars = vars)
-            t = Oper.uinary_oper_compute[self.op](a0)
-            if self.op in ['++x','--x']:
-                vars[self[0].val] = t
-            return t
-
-        assert len(self) == 2, self.__args
-        
-        #
-        # binary operator, ex. + - * /  
-        #
-        if self.op in Oper.binary_oper_compute.keys():
-            a0 = self[0].compute(vars = vars)
-            a1 = self[1].compute(vars = vars)
-            return Oper.binary_oper_compute[self.op](a0, a1)
-        #
-        # assign operator, ex. = += *= 
-        #
-        elif self.op in ['='] + list(Oper.assign_binary_oper.keys()):
-            a0 = self[0].leaf_val()
-            a1 = self[1].compute(vars = vars)
-            assert check_symbol_type(a0) == SymbolType.Variable
-            print(a0,a1)
-            assert a0 in vars, f"{a0}  {vars}"
-            if self.op == '=':
-                vars[a0] = a1
-            else: # in Oper.assign_binary_oper.keys()
-                b = Oper.binary_oper_compute[Oper.assign_binary_oper[self.op]](vars[a0], a1)
-                vars[a0] = b
-            return vars[a0]
 
 class NullNode(SenNode):
     def __init__(self) -> None:
@@ -305,6 +273,7 @@ class SenLeaf(SenNode):
     
     def __init__(self, sym : str):
         super().__init__([sym], None)
+        self.__SymType = check_symbol_type(self.val)
     
     @property
     def is_leaf(self):
@@ -313,6 +282,10 @@ class SenLeaf(SenNode):
     @property
     def val(self):
         return self.args[0]
+    
+    @property
+    def symType(self):
+        return self.__SymType
     
     def __eq__(self, __value) -> bool:
         if type(__value) == str:
@@ -350,7 +323,7 @@ class CtlNode(SenNode):
             return False
         if type(senNode[0]) != SenLeaf:
             return False
-        if check_symbol_type(senNode[0].val) != SymbolType.KeyWord:
+        if senNode[0].symType != SymbolType.KeyWord:
             return False
         if len(senNode) < 2:
             return False
@@ -406,8 +379,7 @@ class ControlFor(CtlNode):
             self[3].compute(vars = vars)
             
             self[2].compute(vars = vars)
-            
-            
+                     
 class ControlIf(CtlNode):
     def check_create(senNode : SenNode):
         if senNode[0].val != "if":
@@ -545,9 +517,11 @@ class OperNode(SenNode):
         # assign operator, ex. = += *= 
         #
         elif self.op in ['='] + list(Oper.assign_binary_oper.keys()):
-            a0 = self[0].leaf_val()
+            assert self[0].symType == SymbolType.Variable
+            
+            a0 = self[0].val
             a1 = self[1].compute(vars = vars)
-            assert check_symbol_type(a0) == SymbolType.Variable
+            
             #print(a0,a1)
             assert a0 in vars, f"{a0}  {vars}"
             if self.op == '=':
@@ -557,6 +531,5 @@ class OperNode(SenNode):
                 vars[a0] = b
             return vars[a0]
     
-
 class FuncNode(SenNode):
     pass
