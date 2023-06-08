@@ -1,20 +1,21 @@
 import sys, os
 
-SCRIPT_DIR = os.getcwd() + '/complier'
-sys.path.append(os.path.dirname(SCRIPT_DIR))
+sys.path.append(os.path.dirname( os.getcwd() + '/complier'))
+sys.path.append(os.path.dirname( os.getcwd() + '/util'))
 
-#from complier import SenNode
-from complier import parse_words, build_node
+from util import remove_all_comment
 
-def compute(text):
-    symbol_list = parse_words(text)
-    senNode = build_node(symbol_list)
+
+from complier import parse_words, build_split, build_oper, SenNode
+from complier import check_node, check_build_split
+from complier import parse_file
+
+def creat_func(func):
+    assert callable(func)
     
-    vars = {}
-    return senNode.compute(vars = vars)
+    funcNode = FuncNode()
+    
+
 
 if __name__ == '__main__':
-    print(SCRIPT_DIR)
-    #print(ROOT_DIR)
-    print(os.listdir())
-    print(compute("(1+2)*7"))
+    print(parse_file('test/files/testcase/1.c'))
